@@ -1,0 +1,68 @@
+checkpoint boot_60 frame=60 pc=000001f8
+checkpoint boot_180 frame=180 pc=000001f8
+checkpoint boot_300 frame=300 pc=000001f8
+checkpoint boot_600 frame=600 pc=000001f8
+checkpoint start_721 frame=721 pc=000001f8
+checkpoint a_842 frame=842 pc=000001f8
+checkpoint after_sega frame=360 pc=000001f8
+checkpoint start_menu frame=481 pc=000001f8
+checkpoint a_menu frame=602 pc=000001f8
+checkpoint a_menu2 frame=723 pc=000001f8
+checkpoint a_menu3 frame=844 pc=000001f8
+checkpoint name frame=91 pc=000001f8
+checkpoint name_start frame=182 pc=000001f8
+checkpoint name_a frame=273 pc=000001f8
+checkpoint intro frame=514 pc=000001f8
+checkpoint intro_a frame=755 pc=000001f8
+checkpoint letter frame=30 pc=000001f8
+checkpoint confirm_name frame=160 pc=000001f8
+checkpoint enter_game frame=470 pc=000001f8
+checkpoint town frame=1080 pc=000001f8
+checkpoint up frame=30 pc=000001f8
+checkpoint left frame=60 pc=000001f8
+checkpoint type frame=90 pc=000001f8
+checkpoint start frame=220 pc=000001f8
+checkpoint accept frame=410 pc=000001f8
+checkpoint cursor frame=40 pc=000001f8
+checkpoint typed frame=70 pc=000001f8
+checkpoint accepted frame=200 pc=000001f8
+checkpoint after frame=510 pc=000001f8
+checkpoint story frame=610 pc=000001f8
+checkpoint skip_start frame=920 pc=000001f8
+checkpoint dialogue1 frame=1230 pc=000001f8
+checkpoint dialogue2 frame=1540 pc=000001f8
+checkpoint dialogue3 frame=1850 pc=000001f8
+checkpoint dialogue_05 frame=350 pc=000001f8
+checkpoint dialogue_10 frame=700 pc=000001f8
+checkpoint dialogue_15 frame=1050 pc=000001f8
+checkpoint dialogue_20 frame=1400 pc=000001f8
+checkpoint dialogue_25 frame=1750 pc=000001f8
+checkpoint dialogue_30 frame=2100 pc=000001f8
+checkpoint dialogue_35 frame=2450 pc=000001f8
+checkpoint dialogue_40 frame=2800 pc=000001f8
+checkpoint dialogue_45 frame=3150 pc=000001f8
+checkpoint dialogue_50 frame=3500 pc=000001f8
+checkpoint idle frame=30 pc=000001f8
+checkpoint right frame=50 pc=000001f8
+checkpoint down frame=70 pc=000001f8
+checkpoint attack frame=85 pc=000001f8
+checkpoint settled frame=115 pc=000001f8
+checkpoint menu frame=155 pc=000001f8
+{
+  "frame.rgba": {
+    "equal": true,
+    "sha256": "1d156a741a89f3eb2b8fd18342edc6070fd13d0145220d5724d20b687c6d2e5a"
+  },
+  "palette.bin": {
+    "equal": true,
+    "sha256": "36e690fc95a3ef15d3110abf5484b54ac230c6bf9efa4c384e97355acd001d40"
+  },
+  "vram.bin": {
+    "equal": true,
+    "sha256": "582f04237f37a955a262b39841122d9ada7ce0dc7266dda479e45eeee70482cf"
+  },
+  "oam.bin": {
+    "equal": true,
+    "sha256": "8d3671ed7cb0b7f946392eaf451b19852f75ae076ff367ff41dad4f20ddac0fa"
+  }
+}

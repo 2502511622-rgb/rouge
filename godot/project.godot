@@ -1,0 +1,16 @@
+config_version=5
+
+[application]
+config/name="Shining Soul — Reconstruction Workbench"
+run/main_scene="res://scenes/recovered_village.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[display]
+window/size/viewport_width=1152
+window/size/viewport_height=768
+window/stretch/mode="canvas_items"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+textures/canvas_textures/default_texture_filter=0

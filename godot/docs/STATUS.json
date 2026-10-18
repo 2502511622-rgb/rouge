@@ -1,0 +1,22 @@
+{
+  "complete_reverse_engineering": false,
+  "complete_godot_port": false,
+  "rom_sha256": "04489e661a493d4f5ef7e0a3e91e3c30094cbf4286cf2b6eee63479b4c3721ce",
+  "rom_revision_observation": "Japanese game code AHUJ with Chinese translation visible at runtime",
+  "verified": [
+    "Cold boot to village deterministic replay: framebuffer, VRAM, palette and OAM byte-identical",
+    "Three text-BG/OBJ frame reconstructions: 0/38400 RGB pixels differ each",
+    "Native editable Godot TileMapLayer/TileSet/Sprite2D scenes load",
+    "1851 nontrivial used BG tile records all have exact ROM byte matches; loader identity not established",
+    "Original placeholder controller smoke tests pass"
+  ],
+  "remaining": [
+    "Whole-world map formats and collision semantics",
+    "All character and enemy animations",
+    "Battle, AI, class, skill, equipment and drop formulas",
+    "Story, quests, complete text and event logic",
+    "Music and sound",
+    "Save formats and multiplayer",
+    "Whole-game native Godot implementation and conformance testing"
+  ]
+}

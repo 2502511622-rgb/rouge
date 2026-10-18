@@ -1,0 +1,18 @@
+{
+  "frame.rgba": {
+    "equal": true,
+    "sha256": "1d156a741a89f3eb2b8fd18342edc6070fd13d0145220d5724d20b687c6d2e5a"
+  },
+  "palette.bin": {
+    "equal": true,
+    "sha256": "36e690fc95a3ef15d3110abf5484b54ac230c6bf9efa4c384e97355acd001d40"
+  },
+  "vram.bin": {
+    "equal": true,
+    "sha256": "582f04237f37a955a262b39841122d9ada7ce0dc7266dda479e45eeee70482cf"
+  },
+  "oam.bin": {
+    "equal": true,
+    "sha256": "8d3671ed7cb0b7f946392eaf451b19852f75ae076ff367ff41dad4f20ddac0fa"
+  }
+}

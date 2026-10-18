@@ -1,0 +1,2353 @@
+{
+  "scores": {
+    "lz77_20fbd8.bin": 7,
+    "lz77_2122e4.bin": 7,
+    "lz77_214bcc.bin": 6,
+    "lz77_218170.bin": 7,
+    "lz77_21920c.bin": 1,
+    "lz77_21ad54.bin": 2,
+    "lz77_21d118.bin": 2,
+    "lz77_21fcd8.bin": 7,
+    "lz77_2225a8.bin": 4,
+    "lz77_229e78.bin": 6,
+    "lz77_22a8d8.bin": 11,
+    "lz77_22d28c.bin": 11,
+    "lz77_23321c.bin": 11,
+    "lz77_27fb7c.bin": 11,
+    "lz77_2af5c8.bin": 11,
+    "lz77_2b1f54.bin": 11,
+    "lz77_2b61a0.bin": 11,
+    "lz77_2ba3d8.bin": 11
+  },
+  "matches": [
+    {
+      "resource": "lz77_20fbd8.bin",
+      "bg": 1,
+      "vram_row": 6,
+      "vram_col": 0,
+      "payload_offset": 3776,
+      "words": [
+        29496,
+        29497,
+        29498,
+        29499,
+        29500,
+        29501,
+        29502,
+        29503
+      ]
+    },
+    {
+      "resource": "lz77_20fbd8.bin",
+      "bg": 1,
+      "vram_row": 7,
+      "vram_col": 0,
+      "payload_offset": 3956,
+      "words": [
+        29528,
+        29529,
+        29530,
+        29531,
+        29532,
+        29533,
+        29534,
+        29535
+      ]
+    },
+    {
+      "resource": "lz77_20fbd8.bin",
+      "bg": 1,
+      "vram_row": 10,
+      "vram_col": 24,
+      "payload_offset": 3776,
+      "words": [
+        29496,
+        29497,
+        29498,
+        29499,
+        29500,
+        29501,
+        29502,
+        29503
+      ]
+    },
+    {
+      "resource": "lz77_20fbd8.bin",
+      "bg": 1,
+      "vram_row": 11,
+      "vram_col": 24,
+      "payload_offset": 3956,
+      "words": [
+        29528,
+        29529,
+        29530,
+        29531,
+        29532,
+        29533,
+        29534,
+        29535
+      ]
+    },
+    {
+      "resource": "lz77_20fbd8.bin",
+      "bg": 1,
+      "vram_row": 31,
+      "vram_col": 0,
+      "payload_offset": 3774,
+      "words": [
+        29495,
+        29496,
+        29497,
+        29498,
+        29499,
+        29500,
+        29501,
+        29502
+      ]
+    },
+    {
+      "resource": "lz77_20fbd8.bin",
+      "bg": 2,
+      "vram_row": 4,
+      "vram_col": 8,
+      "payload_offset": 7078,
+      "words": [
+        29491,
+        29492,
+        29493,
+        29494,
+        29495,
+        29496,
+        29497,
+        29498
+      ]
+    },
+    {
+      "resource": "lz77_20fbd8.bin",
+      "bg": 3,
+      "vram_row": 5,
+      "vram_col": 8,
+      "payload_offset": 24414,
+      "words": [
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201
+      ]
+    },
+    {
+      "resource": "lz77_2122e4.bin",
+      "bg": 1,
+      "vram_row": 6,
+      "vram_col": 0,
+      "payload_offset": 2210,
+      "words": [
+        29496,
+        29497,
+        29498,
+        29499,
+        29500,
+        29501,
+        29502,
+        29503
+      ]
+    },
+    {
+      "resource": "lz77_2122e4.bin",
+      "bg": 1,
+      "vram_row": 7,
+      "vram_col": 0,
+      "payload_offset": 2330,
+      "words": [
+        29528,
+        29529,
+        29530,
+        29531,
+        29532,
+        29533,
+        29534,
+        29535
+      ]
+    },
+    {
+      "resource": "lz77_2122e4.bin",
+      "bg": 1,
+      "vram_row": 10,
+      "vram_col": 24,
+      "payload_offset": 2210,
+      "words": [
+        29496,
+        29497,
+        29498,
+        29499,
+        29500,
+        29501,
+        29502,
+        29503
+      ]
+    },
+    {
+      "resource": "lz77_2122e4.bin",
+      "bg": 1,
+      "vram_row": 11,
+      "vram_col": 24,
+      "payload_offset": 2330,
+      "words": [
+        29528,
+        29529,
+        29530,
+        29531,
+        29532,
+        29533,
+        29534,
+        29535
+      ]
+    },
+    {
+      "resource": "lz77_2122e4.bin",
+      "bg": 1,
+      "vram_row": 31,
+      "vram_col": 0,
+      "payload_offset": 2208,
+      "words": [
+        29495,
+        29496,
+        29497,
+        29498,
+        29499,
+        29500,
+        29501,
+        29502
+      ]
+    },
+    {
+      "resource": "lz77_2122e4.bin",
+      "bg": 2,
+      "vram_row": 4,
+      "vram_col": 8,
+      "payload_offset": 2200,
+      "words": [
+        29491,
+        29492,
+        29493,
+        29494,
+        29495,
+        29496,
+        29497,
+        29498
+      ]
+    },
+    {
+      "resource": "lz77_2122e4.bin",
+      "bg": 3,
+      "vram_row": 5,
+      "vram_col": 8,
+      "payload_offset": 9714,
+      "words": [
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201
+      ]
+    },
+    {
+      "resource": "lz77_214bcc.bin",
+      "bg": 1,
+      "vram_row": 6,
+      "vram_col": 0,
+      "payload_offset": 6704,
+      "words": [
+        29496,
+        29497,
+        29498,
+        29499,
+        29500,
+        29501,
+        29502,
+        29503
+      ]
+    },
+    {
+      "resource": "lz77_214bcc.bin",
+      "bg": 1,
+      "vram_row": 7,
+      "vram_col": 0,
+      "payload_offset": 7064,
+      "words": [
+        29528,
+        29529,
+        29530,
+        29531,
+        29532,
+        29533,
+        29534,
+        29535
+      ]
+    },
+    {
+      "resource": "lz77_214bcc.bin",
+      "bg": 1,
+      "vram_row": 10,
+      "vram_col": 24,
+      "payload_offset": 6704,
+      "words": [
+        29496,
+        29497,
+        29498,
+        29499,
+        29500,
+        29501,
+        29502,
+        29503
+      ]
+    },
+    {
+      "resource": "lz77_214bcc.bin",
+      "bg": 1,
+      "vram_row": 11,
+      "vram_col": 24,
+      "payload_offset": 7064,
+      "words": [
+        29528,
+        29529,
+        29530,
+        29531,
+        29532,
+        29533,
+        29534,
+        29535
+      ]
+    },
+    {
+      "resource": "lz77_214bcc.bin",
+      "bg": 2,
+      "vram_row": 4,
+      "vram_col": 8,
+      "payload_offset": 6322,
+      "words": [
+        29491,
+        29492,
+        29493,
+        29494,
+        29495,
+        29496,
+        29497,
+        29498
+      ]
+    },
+    {
+      "resource": "lz77_214bcc.bin",
+      "bg": 3,
+      "vram_row": 5,
+      "vram_col": 8,
+      "payload_offset": 14874,
+      "words": [
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201
+      ]
+    },
+    {
+      "resource": "lz77_218170.bin",
+      "bg": 1,
+      "vram_row": 6,
+      "vram_col": 0,
+      "payload_offset": 3652,
+      "words": [
+        29496,
+        29497,
+        29498,
+        29499,
+        29500,
+        29501,
+        29502,
+        29503
+      ]
+    },
+    {
+      "resource": "lz77_218170.bin",
+      "bg": 1,
+      "vram_row": 7,
+      "vram_col": 0,
+      "payload_offset": 3772,
+      "words": [
+        29528,
+        29529,
+        29530,
+        29531,
+        29532,
+        29533,
+        29534,
+        29535
+      ]
+    },
+    {
+      "resource": "lz77_218170.bin",
+      "bg": 1,
+      "vram_row": 10,
+      "vram_col": 24,
+      "payload_offset": 3652,
+      "words": [
+        29496,
+        29497,
+        29498,
+        29499,
+        29500,
+        29501,
+        29502,
+        29503
+      ]
+    },
+    {
+      "resource": "lz77_218170.bin",
+      "bg": 1,
+      "vram_row": 11,
+      "vram_col": 24,
+      "payload_offset": 3772,
+      "words": [
+        29528,
+        29529,
+        29530,
+        29531,
+        29532,
+        29533,
+        29534,
+        29535
+      ]
+    },
+    {
+      "resource": "lz77_218170.bin",
+      "bg": 1,
+      "vram_row": 31,
+      "vram_col": 0,
+      "payload_offset": 3650,
+      "words": [
+        29495,
+        29496,
+        29497,
+        29498,
+        29499,
+        29500,
+        29501,
+        29502
+      ]
+    },
+    {
+      "resource": "lz77_218170.bin",
+      "bg": 2,
+      "vram_row": 4,
+      "vram_col": 8,
+      "payload_offset": 3642,
+      "words": [
+        29491,
+        29492,
+        29493,
+        29494,
+        29495,
+        29496,
+        29497,
+        29498
+      ]
+    },
+    {
+      "resource": "lz77_218170.bin",
+      "bg": 3,
+      "vram_row": 5,
+      "vram_col": 8,
+      "payload_offset": 6470,
+      "words": [
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201
+      ]
+    },
+    {
+      "resource": "lz77_21920c.bin",
+      "bg": 3,
+      "vram_row": 22,
+      "vram_col": 0,
+      "payload_offset": 2204,
+      "words": [
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145
+      ]
+    },
+    {
+      "resource": "lz77_21ad54.bin",
+      "bg": 3,
+      "vram_row": 8,
+      "vram_col": 0,
+      "payload_offset": 1822,
+      "words": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208
+      ]
+    },
+    {
+      "resource": "lz77_21ad54.bin",
+      "bg": 3,
+      "vram_row": 24,
+      "vram_col": 0,
+      "payload_offset": 1824,
+      "words": [
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ]
+    },
+    {
+      "resource": "lz77_21d118.bin",
+      "bg": 3,
+      "vram_row": 8,
+      "vram_col": 0,
+      "payload_offset": 2190,
+      "words": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208
+      ]
+    },
+    {
+      "resource": "lz77_21d118.bin",
+      "bg": 3,
+      "vram_row": 24,
+      "vram_col": 0,
+      "payload_offset": 2192,
+      "words": [
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ]
+    },
+    {
+      "resource": "lz77_21fcd8.bin",
+      "bg": 3,
+      "vram_row": 7,
+      "vram_col": 0,
+      "payload_offset": 8172,
+      "words": [
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176
+      ]
+    },
+    {
+      "resource": "lz77_21fcd8.bin",
+      "bg": 3,
+      "vram_row": 8,
+      "vram_col": 0,
+      "payload_offset": 2912,
+      "words": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208
+      ]
+    },
+    {
+      "resource": "lz77_21fcd8.bin",
+      "bg": 3,
+      "vram_row": 9,
+      "vram_col": 0,
+      "payload_offset": 8532,
+      "words": [
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240
+      ]
+    },
+    {
+      "resource": "lz77_21fcd8.bin",
+      "bg": 3,
+      "vram_row": 22,
+      "vram_col": 0,
+      "payload_offset": 7994,
+      "words": [
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145
+      ]
+    },
+    {
+      "resource": "lz77_21fcd8.bin",
+      "bg": 3,
+      "vram_row": 23,
+      "vram_col": 0,
+      "payload_offset": 8174,
+      "words": [
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177
+      ]
+    },
+    {
+      "resource": "lz77_21fcd8.bin",
+      "bg": 3,
+      "vram_row": 24,
+      "vram_col": 0,
+      "payload_offset": 2914,
+      "words": [
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ]
+    },
+    {
+      "resource": "lz77_21fcd8.bin",
+      "bg": 3,
+      "vram_row": 25,
+      "vram_col": 0,
+      "payload_offset": 8534,
+      "words": [
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241
+      ]
+    },
+    {
+      "resource": "lz77_2225a8.bin",
+      "bg": 3,
+      "vram_row": 8,
+      "vram_col": 0,
+      "payload_offset": 5600,
+      "words": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208
+      ]
+    },
+    {
+      "resource": "lz77_2225a8.bin",
+      "bg": 3,
+      "vram_row": 9,
+      "vram_col": 0,
+      "payload_offset": 5780,
+      "words": [
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240
+      ]
+    },
+    {
+      "resource": "lz77_2225a8.bin",
+      "bg": 3,
+      "vram_row": 24,
+      "vram_col": 0,
+      "payload_offset": 5602,
+      "words": [
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ]
+    },
+    {
+      "resource": "lz77_2225a8.bin",
+      "bg": 3,
+      "vram_row": 25,
+      "vram_col": 0,
+      "payload_offset": 5782,
+      "words": [
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241
+      ]
+    },
+    {
+      "resource": "lz77_229e78.bin",
+      "bg": 3,
+      "vram_row": 7,
+      "vram_col": 0,
+      "payload_offset": 5598,
+      "words": [
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176
+      ]
+    },
+    {
+      "resource": "lz77_229e78.bin",
+      "bg": 3,
+      "vram_row": 8,
+      "vram_col": 0,
+      "payload_offset": 5658,
+      "words": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208
+      ]
+    },
+    {
+      "resource": "lz77_229e78.bin",
+      "bg": 3,
+      "vram_row": 22,
+      "vram_col": 0,
+      "payload_offset": 5540,
+      "words": [
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145
+      ]
+    },
+    {
+      "resource": "lz77_229e78.bin",
+      "bg": 3,
+      "vram_row": 23,
+      "vram_col": 0,
+      "payload_offset": 5600,
+      "words": [
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177
+      ]
+    },
+    {
+      "resource": "lz77_229e78.bin",
+      "bg": 3,
+      "vram_row": 24,
+      "vram_col": 0,
+      "payload_offset": 5660,
+      "words": [
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ]
+    },
+    {
+      "resource": "lz77_229e78.bin",
+      "bg": 3,
+      "vram_row": 25,
+      "vram_col": 0,
+      "payload_offset": 5720,
+      "words": [
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241
+      ]
+    },
+    {
+      "resource": "lz77_22a8d8.bin",
+      "bg": 3,
+      "vram_row": 5,
+      "vram_col": 8,
+      "payload_offset": 244,
+      "words": [
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201
+      ]
+    },
+    {
+      "resource": "lz77_22a8d8.bin",
+      "bg": 3,
+      "vram_row": 7,
+      "vram_col": 0,
+      "payload_offset": 78,
+      "words": [
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176
+      ]
+    },
+    {
+      "resource": "lz77_22a8d8.bin",
+      "bg": 3,
+      "vram_row": 8,
+      "vram_col": 0,
+      "payload_offset": 258,
+      "words": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208
+      ]
+    },
+    {
+      "resource": "lz77_22a8d8.bin",
+      "bg": 3,
+      "vram_row": 9,
+      "vram_col": 0,
+      "payload_offset": 438,
+      "words": [
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240
+      ]
+    },
+    {
+      "resource": "lz77_22a8d8.bin",
+      "bg": 3,
+      "vram_row": 10,
+      "vram_col": 0,
+      "payload_offset": 618,
+      "words": [
+        265,
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272
+      ]
+    },
+    {
+      "resource": "lz77_22a8d8.bin",
+      "bg": 3,
+      "vram_row": 21,
+      "vram_col": 0,
+      "payload_offset": 11220,
+      "words": [
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113
+      ]
+    },
+    {
+      "resource": "lz77_22a8d8.bin",
+      "bg": 3,
+      "vram_row": 22,
+      "vram_col": 0,
+      "payload_offset": 11400,
+      "words": [
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145
+      ]
+    },
+    {
+      "resource": "lz77_22a8d8.bin",
+      "bg": 3,
+      "vram_row": 23,
+      "vram_col": 0,
+      "payload_offset": 80,
+      "words": [
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177
+      ]
+    },
+    {
+      "resource": "lz77_22a8d8.bin",
+      "bg": 3,
+      "vram_row": 24,
+      "vram_col": 0,
+      "payload_offset": 260,
+      "words": [
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ]
+    },
+    {
+      "resource": "lz77_22a8d8.bin",
+      "bg": 3,
+      "vram_row": 25,
+      "vram_col": 0,
+      "payload_offset": 440,
+      "words": [
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241
+      ]
+    },
+    {
+      "resource": "lz77_22a8d8.bin",
+      "bg": 3,
+      "vram_row": 26,
+      "vram_col": 0,
+      "payload_offset": 620,
+      "words": [
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272,
+        273
+      ]
+    },
+    {
+      "resource": "lz77_22d28c.bin",
+      "bg": 3,
+      "vram_row": 5,
+      "vram_col": 8,
+      "payload_offset": 364,
+      "words": [
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201
+      ]
+    },
+    {
+      "resource": "lz77_22d28c.bin",
+      "bg": 3,
+      "vram_row": 7,
+      "vram_col": 0,
+      "payload_offset": 78,
+      "words": [
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176
+      ]
+    },
+    {
+      "resource": "lz77_22d28c.bin",
+      "bg": 3,
+      "vram_row": 8,
+      "vram_col": 0,
+      "payload_offset": 378,
+      "words": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208
+      ]
+    },
+    {
+      "resource": "lz77_22d28c.bin",
+      "bg": 3,
+      "vram_row": 9,
+      "vram_col": 0,
+      "payload_offset": 678,
+      "words": [
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240
+      ]
+    },
+    {
+      "resource": "lz77_22d28c.bin",
+      "bg": 3,
+      "vram_row": 10,
+      "vram_col": 0,
+      "payload_offset": 978,
+      "words": [
+        265,
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272
+      ]
+    },
+    {
+      "resource": "lz77_22d28c.bin",
+      "bg": 3,
+      "vram_row": 21,
+      "vram_col": 0,
+      "payload_offset": 11644,
+      "words": [
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113
+      ]
+    },
+    {
+      "resource": "lz77_22d28c.bin",
+      "bg": 3,
+      "vram_row": 22,
+      "vram_col": 0,
+      "payload_offset": 11944,
+      "words": [
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145
+      ]
+    },
+    {
+      "resource": "lz77_22d28c.bin",
+      "bg": 3,
+      "vram_row": 23,
+      "vram_col": 0,
+      "payload_offset": 80,
+      "words": [
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177
+      ]
+    },
+    {
+      "resource": "lz77_22d28c.bin",
+      "bg": 3,
+      "vram_row": 24,
+      "vram_col": 0,
+      "payload_offset": 380,
+      "words": [
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ]
+    },
+    {
+      "resource": "lz77_22d28c.bin",
+      "bg": 3,
+      "vram_row": 25,
+      "vram_col": 0,
+      "payload_offset": 680,
+      "words": [
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241
+      ]
+    },
+    {
+      "resource": "lz77_22d28c.bin",
+      "bg": 3,
+      "vram_row": 26,
+      "vram_col": 0,
+      "payload_offset": 980,
+      "words": [
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272,
+        273
+      ]
+    },
+    {
+      "resource": "lz77_23321c.bin",
+      "bg": 3,
+      "vram_row": 5,
+      "vram_col": 8,
+      "payload_offset": 124,
+      "words": [
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201
+      ]
+    },
+    {
+      "resource": "lz77_23321c.bin",
+      "bg": 3,
+      "vram_row": 7,
+      "vram_col": 0,
+      "payload_offset": 78,
+      "words": [
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176
+      ]
+    },
+    {
+      "resource": "lz77_23321c.bin",
+      "bg": 3,
+      "vram_row": 8,
+      "vram_col": 0,
+      "payload_offset": 318,
+      "words": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208
+      ]
+    },
+    {
+      "resource": "lz77_23321c.bin",
+      "bg": 3,
+      "vram_row": 9,
+      "vram_col": 0,
+      "payload_offset": 558,
+      "words": [
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240
+      ]
+    },
+    {
+      "resource": "lz77_23321c.bin",
+      "bg": 3,
+      "vram_row": 10,
+      "vram_col": 0,
+      "payload_offset": 798,
+      "words": [
+        265,
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272
+      ]
+    },
+    {
+      "resource": "lz77_23321c.bin",
+      "bg": 3,
+      "vram_row": 21,
+      "vram_col": 0,
+      "payload_offset": 15420,
+      "words": [
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113
+      ]
+    },
+    {
+      "resource": "lz77_23321c.bin",
+      "bg": 3,
+      "vram_row": 22,
+      "vram_col": 0,
+      "payload_offset": 15660,
+      "words": [
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145
+      ]
+    },
+    {
+      "resource": "lz77_23321c.bin",
+      "bg": 3,
+      "vram_row": 23,
+      "vram_col": 0,
+      "payload_offset": 80,
+      "words": [
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177
+      ]
+    },
+    {
+      "resource": "lz77_23321c.bin",
+      "bg": 3,
+      "vram_row": 24,
+      "vram_col": 0,
+      "payload_offset": 320,
+      "words": [
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ]
+    },
+    {
+      "resource": "lz77_23321c.bin",
+      "bg": 3,
+      "vram_row": 25,
+      "vram_col": 0,
+      "payload_offset": 560,
+      "words": [
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241
+      ]
+    },
+    {
+      "resource": "lz77_23321c.bin",
+      "bg": 3,
+      "vram_row": 26,
+      "vram_col": 0,
+      "payload_offset": 800,
+      "words": [
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272,
+        273
+      ]
+    },
+    {
+      "resource": "lz77_27fb7c.bin",
+      "bg": 3,
+      "vram_row": 5,
+      "vram_col": 8,
+      "payload_offset": 3838,
+      "words": [
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201
+      ]
+    },
+    {
+      "resource": "lz77_27fb7c.bin",
+      "bg": 3,
+      "vram_row": 7,
+      "vram_col": 0,
+      "payload_offset": 3552,
+      "words": [
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176
+      ]
+    },
+    {
+      "resource": "lz77_27fb7c.bin",
+      "bg": 3,
+      "vram_row": 8,
+      "vram_col": 0,
+      "payload_offset": 3852,
+      "words": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208
+      ]
+    },
+    {
+      "resource": "lz77_27fb7c.bin",
+      "bg": 3,
+      "vram_row": 9,
+      "vram_col": 0,
+      "payload_offset": 4152,
+      "words": [
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240
+      ]
+    },
+    {
+      "resource": "lz77_27fb7c.bin",
+      "bg": 3,
+      "vram_row": 10,
+      "vram_col": 0,
+      "payload_offset": 4452,
+      "words": [
+        265,
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272
+      ]
+    },
+    {
+      "resource": "lz77_27fb7c.bin",
+      "bg": 3,
+      "vram_row": 21,
+      "vram_col": 0,
+      "payload_offset": 2954,
+      "words": [
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113
+      ]
+    },
+    {
+      "resource": "lz77_27fb7c.bin",
+      "bg": 3,
+      "vram_row": 22,
+      "vram_col": 0,
+      "payload_offset": 3254,
+      "words": [
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145
+      ]
+    },
+    {
+      "resource": "lz77_27fb7c.bin",
+      "bg": 3,
+      "vram_row": 23,
+      "vram_col": 0,
+      "payload_offset": 3554,
+      "words": [
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177
+      ]
+    },
+    {
+      "resource": "lz77_27fb7c.bin",
+      "bg": 3,
+      "vram_row": 24,
+      "vram_col": 0,
+      "payload_offset": 3854,
+      "words": [
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ]
+    },
+    {
+      "resource": "lz77_27fb7c.bin",
+      "bg": 3,
+      "vram_row": 25,
+      "vram_col": 0,
+      "payload_offset": 4154,
+      "words": [
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241
+      ]
+    },
+    {
+      "resource": "lz77_27fb7c.bin",
+      "bg": 3,
+      "vram_row": 26,
+      "vram_col": 0,
+      "payload_offset": 4454,
+      "words": [
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272,
+        273
+      ]
+    },
+    {
+      "resource": "lz77_2af5c8.bin",
+      "bg": 3,
+      "vram_row": 5,
+      "vram_col": 8,
+      "payload_offset": 244,
+      "words": [
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201
+      ]
+    },
+    {
+      "resource": "lz77_2af5c8.bin",
+      "bg": 3,
+      "vram_row": 7,
+      "vram_col": 0,
+      "payload_offset": 78,
+      "words": [
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176
+      ]
+    },
+    {
+      "resource": "lz77_2af5c8.bin",
+      "bg": 3,
+      "vram_row": 8,
+      "vram_col": 0,
+      "payload_offset": 258,
+      "words": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208
+      ]
+    },
+    {
+      "resource": "lz77_2af5c8.bin",
+      "bg": 3,
+      "vram_row": 9,
+      "vram_col": 0,
+      "payload_offset": 438,
+      "words": [
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240
+      ]
+    },
+    {
+      "resource": "lz77_2af5c8.bin",
+      "bg": 3,
+      "vram_row": 10,
+      "vram_col": 0,
+      "payload_offset": 618,
+      "words": [
+        265,
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272
+      ]
+    },
+    {
+      "resource": "lz77_2af5c8.bin",
+      "bg": 3,
+      "vram_row": 21,
+      "vram_col": 0,
+      "payload_offset": 11220,
+      "words": [
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113
+      ]
+    },
+    {
+      "resource": "lz77_2af5c8.bin",
+      "bg": 3,
+      "vram_row": 22,
+      "vram_col": 0,
+      "payload_offset": 11400,
+      "words": [
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145
+      ]
+    },
+    {
+      "resource": "lz77_2af5c8.bin",
+      "bg": 3,
+      "vram_row": 23,
+      "vram_col": 0,
+      "payload_offset": 80,
+      "words": [
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177
+      ]
+    },
+    {
+      "resource": "lz77_2af5c8.bin",
+      "bg": 3,
+      "vram_row": 24,
+      "vram_col": 0,
+      "payload_offset": 260,
+      "words": [
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ]
+    },
+    {
+      "resource": "lz77_2af5c8.bin",
+      "bg": 3,
+      "vram_row": 25,
+      "vram_col": 0,
+      "payload_offset": 440,
+      "words": [
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241
+      ]
+    },
+    {
+      "resource": "lz77_2af5c8.bin",
+      "bg": 3,
+      "vram_row": 26,
+      "vram_col": 0,
+      "payload_offset": 620,
+      "words": [
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272,
+        273
+      ]
+    },
+    {
+      "resource": "lz77_2b1f54.bin",
+      "bg": 3,
+      "vram_row": 5,
+      "vram_col": 8,
+      "payload_offset": 124,
+      "words": [
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201
+      ]
+    },
+    {
+      "resource": "lz77_2b1f54.bin",
+      "bg": 3,
+      "vram_row": 7,
+      "vram_col": 0,
+      "payload_offset": 78,
+      "words": [
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176
+      ]
+    },
+    {
+      "resource": "lz77_2b1f54.bin",
+      "bg": 3,
+      "vram_row": 8,
+      "vram_col": 0,
+      "payload_offset": 318,
+      "words": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208
+      ]
+    },
+    {
+      "resource": "lz77_2b1f54.bin",
+      "bg": 3,
+      "vram_row": 9,
+      "vram_col": 0,
+      "payload_offset": 558,
+      "words": [
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240
+      ]
+    },
+    {
+      "resource": "lz77_2b1f54.bin",
+      "bg": 3,
+      "vram_row": 10,
+      "vram_col": 0,
+      "payload_offset": 798,
+      "words": [
+        265,
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272
+      ]
+    },
+    {
+      "resource": "lz77_2b1f54.bin",
+      "bg": 3,
+      "vram_row": 21,
+      "vram_col": 0,
+      "payload_offset": 15420,
+      "words": [
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113
+      ]
+    },
+    {
+      "resource": "lz77_2b1f54.bin",
+      "bg": 3,
+      "vram_row": 22,
+      "vram_col": 0,
+      "payload_offset": 15660,
+      "words": [
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145
+      ]
+    },
+    {
+      "resource": "lz77_2b1f54.bin",
+      "bg": 3,
+      "vram_row": 23,
+      "vram_col": 0,
+      "payload_offset": 80,
+      "words": [
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177
+      ]
+    },
+    {
+      "resource": "lz77_2b1f54.bin",
+      "bg": 3,
+      "vram_row": 24,
+      "vram_col": 0,
+      "payload_offset": 320,
+      "words": [
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ]
+    },
+    {
+      "resource": "lz77_2b1f54.bin",
+      "bg": 3,
+      "vram_row": 25,
+      "vram_col": 0,
+      "payload_offset": 560,
+      "words": [
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241
+      ]
+    },
+    {
+      "resource": "lz77_2b1f54.bin",
+      "bg": 3,
+      "vram_row": 26,
+      "vram_col": 0,
+      "payload_offset": 800,
+      "words": [
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272,
+        273
+      ]
+    },
+    {
+      "resource": "lz77_2b61a0.bin",
+      "bg": 3,
+      "vram_row": 5,
+      "vram_col": 8,
+      "payload_offset": 6358,
+      "words": [
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201
+      ]
+    },
+    {
+      "resource": "lz77_2b61a0.bin",
+      "bg": 3,
+      "vram_row": 7,
+      "vram_col": 0,
+      "payload_offset": 3228,
+      "words": [
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176
+      ]
+    },
+    {
+      "resource": "lz77_2b61a0.bin",
+      "bg": 3,
+      "vram_row": 8,
+      "vram_col": 0,
+      "payload_offset": 3408,
+      "words": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208
+      ]
+    },
+    {
+      "resource": "lz77_2b61a0.bin",
+      "bg": 3,
+      "vram_row": 9,
+      "vram_col": 0,
+      "payload_offset": 3588,
+      "words": [
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240
+      ]
+    },
+    {
+      "resource": "lz77_2b61a0.bin",
+      "bg": 3,
+      "vram_row": 10,
+      "vram_col": 0,
+      "payload_offset": 3768,
+      "words": [
+        265,
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272
+      ]
+    },
+    {
+      "resource": "lz77_2b61a0.bin",
+      "bg": 3,
+      "vram_row": 21,
+      "vram_col": 0,
+      "payload_offset": 2870,
+      "words": [
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113
+      ]
+    },
+    {
+      "resource": "lz77_2b61a0.bin",
+      "bg": 3,
+      "vram_row": 22,
+      "vram_col": 0,
+      "payload_offset": 3050,
+      "words": [
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145
+      ]
+    },
+    {
+      "resource": "lz77_2b61a0.bin",
+      "bg": 3,
+      "vram_row": 23,
+      "vram_col": 0,
+      "payload_offset": 3230,
+      "words": [
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177
+      ]
+    },
+    {
+      "resource": "lz77_2b61a0.bin",
+      "bg": 3,
+      "vram_row": 24,
+      "vram_col": 0,
+      "payload_offset": 3410,
+      "words": [
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ]
+    },
+    {
+      "resource": "lz77_2b61a0.bin",
+      "bg": 3,
+      "vram_row": 25,
+      "vram_col": 0,
+      "payload_offset": 3590,
+      "words": [
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241
+      ]
+    },
+    {
+      "resource": "lz77_2b61a0.bin",
+      "bg": 3,
+      "vram_row": 26,
+      "vram_col": 0,
+      "payload_offset": 3770,
+      "words": [
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272,
+        273
+      ]
+    },
+    {
+      "resource": "lz77_2ba3d8.bin",
+      "bg": 3,
+      "vram_row": 5,
+      "vram_col": 8,
+      "payload_offset": 8320,
+      "words": [
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201
+      ]
+    },
+    {
+      "resource": "lz77_2ba3d8.bin",
+      "bg": 3,
+      "vram_row": 7,
+      "vram_col": 0,
+      "payload_offset": 8004,
+      "words": [
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176
+      ]
+    },
+    {
+      "resource": "lz77_2ba3d8.bin",
+      "bg": 3,
+      "vram_row": 8,
+      "vram_col": 0,
+      "payload_offset": 8124,
+      "words": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208
+      ]
+    },
+    {
+      "resource": "lz77_2ba3d8.bin",
+      "bg": 3,
+      "vram_row": 9,
+      "vram_col": 0,
+      "payload_offset": 8244,
+      "words": [
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240
+      ]
+    },
+    {
+      "resource": "lz77_2ba3d8.bin",
+      "bg": 3,
+      "vram_row": 10,
+      "vram_col": 0,
+      "payload_offset": 8364,
+      "words": [
+        265,
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272
+      ]
+    },
+    {
+      "resource": "lz77_2ba3d8.bin",
+      "bg": 3,
+      "vram_row": 21,
+      "vram_col": 0,
+      "payload_offset": 7766,
+      "words": [
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113
+      ]
+    },
+    {
+      "resource": "lz77_2ba3d8.bin",
+      "bg": 3,
+      "vram_row": 22,
+      "vram_col": 0,
+      "payload_offset": 7886,
+      "words": [
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145
+      ]
+    },
+    {
+      "resource": "lz77_2ba3d8.bin",
+      "bg": 3,
+      "vram_row": 23,
+      "vram_col": 0,
+      "payload_offset": 8006,
+      "words": [
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177
+      ]
+    },
+    {
+      "resource": "lz77_2ba3d8.bin",
+      "bg": 3,
+      "vram_row": 24,
+      "vram_col": 0,
+      "payload_offset": 8126,
+      "words": [
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ]
+    },
+    {
+      "resource": "lz77_2ba3d8.bin",
+      "bg": 3,
+      "vram_row": 25,
+      "vram_col": 0,
+      "payload_offset": 8246,
+      "words": [
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241
+      ]
+    },
+    {
+      "resource": "lz77_2ba3d8.bin",
+      "bg": 3,
+      "vram_row": 26,
+      "vram_col": 0,
+      "payload_offset": 8366,
+      "words": [
+        266,
+        267,
+        268,
+        269,
+        270,
+        271,
+        272,
+        273
+      ]
+    }
+  ]
+}

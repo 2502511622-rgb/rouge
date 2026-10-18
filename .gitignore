@@ -1,0 +1,4 @@
+godot/.godot/
+**/__pycache__/
+*.gba
+*.sav

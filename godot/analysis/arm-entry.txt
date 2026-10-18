@@ -1,0 +1,38 @@
+# ARM reset branch evidence
+
+ROM offset 0 contains ARM B 0x0877fd00. This is static ARM decoding, not executed behavior.
+Following bytes may switch mode or contain data; stop interpreting at branch targets without control-flow verification.
+
+08000000: 3eff1dea   b #0x877fd00
+0877FD00: 1200a0e3   mov r0, #0x12
+0877FD04: 00f029e1   msr cpsr_fc, r0
+0877FD08: 28d09fe5   ldr sp, [pc, #0x28]
+0877FD0C: 1f00a0e3   mov r0, #0x1f
+0877FD10: 00f029e1   msr cpsr_fc, r0
+0877FD14: 18d09fe5   ldr sp, [pc, #0x18]
+0877FD18: e4109fe5   ldr r1, [pc, #0xe4]
+0877FD1C: 18008fe2   add r0, pc, #0x18
+0877FD20: 000081e5   str r0, [r1]
+0877FD24: dc109fe5   ldr r1, [pc, #0xdc]
+0877FD28: 0fe0a0e1   mov lr, pc
+0877FD2C: 11ff2fe1   bx r1
+0877FD30: f2ffffea   b #0x877fd00
+0877FD34: 007f0003   movweq r7, #0xf00
+0877FD38: a07f0003   movweq r7, #0xfa0
+0877FD3C: 0133a0e3   mov r3, #0x4000000
+0877FD40: 023c83e2   add r3, r3, #0x200
+0877FD44: 002093e5   ldr r2, [r3]
+0877FD48: 221802e0   and r1, r2, r2, lsr #16
+0877FD4C: 0020a0e3   mov r2, #0
+0877FD50: 010011e2   ands r0, r1, #1
+0877FD54: 2500001a   bne #0x877fdf0
+0877FD58: 042082e2   add r2, r2, #4
+0877FD5C: 020011e2   ands r0, r1, #2
+0877FD60: 2200001a   bne #0x877fdf0
+0877FD64: 042082e2   add r2, r2, #4
+0877FD68: 040011e2   ands r0, r1, #4
+0877FD6C: 1f00001a   bne #0x877fdf0
+0877FD70: 042082e2   add r2, r2, #4
+0877FD74: 080011e2   ands r0, r1, #8
+0877FD78: 1c00001a   bne #0x877fdf0
+0877FD7C: 042082e2   add r2, r2, #4

@@ -1,0 +1,668 @@
+[
+  {
+    "rom_offset": 2161624,
+    "width": 90,
+    "height": 60,
+    "header_tag": 1056,
+    "decoded_size": 43216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2171620,
+    "width": 60,
+    "height": 80,
+    "header_tag": 1059,
+    "decoded_size": 38416,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2182092,
+    "width": 180,
+    "height": 40,
+    "header_tag": 1076,
+    "decoded_size": 57616,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2195824,
+    "width": 60,
+    "height": 40,
+    "header_tag": 1039,
+    "decoded_size": 19216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2200076,
+    "width": 60,
+    "height": 60,
+    "header_tag": 1050,
+    "decoded_size": 28816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2207060,
+    "width": 60,
+    "height": 80,
+    "header_tag": 1051,
+    "decoded_size": 38416,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2216216,
+    "width": 90,
+    "height": 60,
+    "header_tag": 1051,
+    "decoded_size": 43216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2225288,
+    "width": 30,
+    "height": 20,
+    "header_tag": 1038,
+    "decoded_size": 4816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2227416,
+    "width": 90,
+    "height": 60,
+    "header_tag": 1056,
+    "decoded_size": 43216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2237864,
+    "width": 90,
+    "height": 60,
+    "header_tag": 1055,
+    "decoded_size": 43216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2247600,
+    "width": 180,
+    "height": 80,
+    "header_tag": 1079,
+    "decoded_size": 115216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2268792,
+    "width": 30,
+    "height": 40,
+    "header_tag": 1039,
+    "decoded_size": 9616,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2271448,
+    "width": 90,
+    "height": 60,
+    "header_tag": 1058,
+    "decoded_size": 43216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2282124,
+    "width": 150,
+    "height": 100,
+    "header_tag": 1071,
+    "decoded_size": 120016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2306588,
+    "width": 120,
+    "height": 80,
+    "header_tag": 1067,
+    "decoded_size": 76816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2620284,
+    "width": 150,
+    "height": 80,
+    "header_tag": 1061,
+    "decoded_size": 96016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2815432,
+    "width": 90,
+    "height": 60,
+    "header_tag": 1056,
+    "decoded_size": 43216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2826068,
+    "width": 120,
+    "height": 80,
+    "header_tag": 1063,
+    "decoded_size": 76816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2843040,
+    "width": 90,
+    "height": 100,
+    "header_tag": 1070,
+    "decoded_size": 72016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2859992,
+    "width": 60,
+    "height": 60,
+    "header_tag": 1044,
+    "decoded_size": 28816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 2867500,
+    "width": 120,
+    "height": 100,
+    "header_tag": 1059,
+    "decoded_size": 96016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3208464,
+    "width": 120,
+    "height": 100,
+    "header_tag": 1051,
+    "decoded_size": 96016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3373572,
+    "width": 120,
+    "height": 80,
+    "header_tag": 1059,
+    "decoded_size": 76816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3391140,
+    "width": 90,
+    "height": 100,
+    "header_tag": 1059,
+    "decoded_size": 72016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3409620,
+    "width": 120,
+    "height": 100,
+    "header_tag": 1056,
+    "decoded_size": 96016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3430384,
+    "width": 90,
+    "height": 60,
+    "header_tag": 1052,
+    "decoded_size": 43216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3442232,
+    "width": 150,
+    "height": 80,
+    "header_tag": 1059,
+    "decoded_size": 96016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3462824,
+    "width": 90,
+    "height": 80,
+    "header_tag": 1031,
+    "decoded_size": 57616,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3476044,
+    "width": 90,
+    "height": 80,
+    "header_tag": 1051,
+    "decoded_size": 57616,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3486636,
+    "width": 120,
+    "height": 60,
+    "header_tag": 1052,
+    "decoded_size": 57616,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3497196,
+    "width": 90,
+    "height": 80,
+    "header_tag": 1058,
+    "decoded_size": 57616,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3507972,
+    "width": 120,
+    "height": 80,
+    "header_tag": 1065,
+    "decoded_size": 76816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3520540,
+    "width": 90,
+    "height": 80,
+    "header_tag": 1050,
+    "decoded_size": 57616,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3531168,
+    "width": 90,
+    "height": 60,
+    "header_tag": 1032,
+    "decoded_size": 43216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3659600,
+    "width": 120,
+    "height": 80,
+    "header_tag": 1068,
+    "decoded_size": 76816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3673016,
+    "width": 90,
+    "height": 60,
+    "header_tag": 1047,
+    "decoded_size": 43216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3801624,
+    "width": 90,
+    "height": 60,
+    "header_tag": 1031,
+    "decoded_size": 43216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3808224,
+    "width": 90,
+    "height": 80,
+    "header_tag": 1053,
+    "decoded_size": 57616,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3817888,
+    "width": 150,
+    "height": 60,
+    "header_tag": 1063,
+    "decoded_size": 72016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3829224,
+    "width": 120,
+    "height": 80,
+    "header_tag": 1071,
+    "decoded_size": 76816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3842512,
+    "width": 120,
+    "height": 80,
+    "header_tag": 1072,
+    "decoded_size": 76816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3855212,
+    "width": 90,
+    "height": 60,
+    "header_tag": 1052,
+    "decoded_size": 43216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3862832,
+    "width": 150,
+    "height": 100,
+    "header_tag": 1072,
+    "decoded_size": 120016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3881212,
+    "width": 150,
+    "height": 100,
+    "header_tag": 1076,
+    "decoded_size": 120016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3899936,
+    "width": 60,
+    "height": 40,
+    "header_tag": 1035,
+    "decoded_size": 19216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3903692,
+    "width": 150,
+    "height": 100,
+    "header_tag": 1069,
+    "decoded_size": 120016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3921844,
+    "width": 150,
+    "height": 100,
+    "header_tag": 1073,
+    "decoded_size": 120016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3940868,
+    "width": 90,
+    "height": 60,
+    "header_tag": 1045,
+    "decoded_size": 43216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3946828,
+    "width": 60,
+    "height": 120,
+    "header_tag": 1080,
+    "decoded_size": 57616,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3957704,
+    "width": 60,
+    "height": 60,
+    "header_tag": 1045,
+    "decoded_size": 28816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3963628,
+    "width": 60,
+    "height": 140,
+    "header_tag": 1093,
+    "decoded_size": 67216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3975752,
+    "width": 60,
+    "height": 60,
+    "header_tag": 1044,
+    "decoded_size": 28816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3981668,
+    "width": 60,
+    "height": 140,
+    "header_tag": 1063,
+    "decoded_size": 67216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3992060,
+    "width": 60,
+    "height": 60,
+    "header_tag": 1046,
+    "decoded_size": 28816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 3997884,
+    "width": 60,
+    "height": 120,
+    "header_tag": 1078,
+    "decoded_size": 57616,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4008052,
+    "width": 30,
+    "height": 60,
+    "header_tag": 1038,
+    "decoded_size": 14416,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4011136,
+    "width": 30,
+    "height": 100,
+    "header_tag": 1031,
+    "decoded_size": 24016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4015248,
+    "width": 30,
+    "height": 20,
+    "header_tag": 1032,
+    "decoded_size": 4816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4016920,
+    "width": 120,
+    "height": 60,
+    "header_tag": 1036,
+    "decoded_size": 57616,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4026432,
+    "width": 120,
+    "height": 80,
+    "header_tag": 1057,
+    "decoded_size": 76816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4039108,
+    "width": 120,
+    "height": 80,
+    "header_tag": 1061,
+    "decoded_size": 76816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4052040,
+    "width": 150,
+    "height": 80,
+    "header_tag": 1030,
+    "decoded_size": 96016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4065244,
+    "width": 120,
+    "height": 80,
+    "header_tag": 1069,
+    "decoded_size": 76816,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4078220,
+    "width": 60,
+    "height": 40,
+    "header_tag": 1028,
+    "decoded_size": 19216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4081332,
+    "width": 150,
+    "height": 80,
+    "header_tag": 1043,
+    "decoded_size": 96016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4095496,
+    "width": 90,
+    "height": 100,
+    "header_tag": 1058,
+    "decoded_size": 72016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4106932,
+    "width": 60,
+    "height": 40,
+    "header_tag": 1029,
+    "decoded_size": 19216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4110096,
+    "width": 150,
+    "height": 80,
+    "header_tag": 1070,
+    "decoded_size": 96016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4127556,
+    "width": 150,
+    "height": 80,
+    "header_tag": 1057,
+    "decoded_size": 96016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4142084,
+    "width": 60,
+    "height": 40,
+    "header_tag": 1028,
+    "decoded_size": 19216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4145196,
+    "width": 90,
+    "height": 120,
+    "header_tag": 1070,
+    "decoded_size": 86416,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4162652,
+    "width": 150,
+    "height": 80,
+    "header_tag": 1038,
+    "decoded_size": 96016,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4176604,
+    "width": 60,
+    "height": 40,
+    "header_tag": 1030,
+    "decoded_size": 19216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  },
+  {
+    "rom_offset": 4179724,
+    "width": 60,
+    "height": 40,
+    "header_tag": 1029,
+    "decoded_size": 19216,
+    "record_stride_hypothesis": 8,
+    "classification": "dimensioned_8_bytes_per_cell_payload; semantics unresolved"
+  }
+]

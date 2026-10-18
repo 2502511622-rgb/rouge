@@ -10,9 +10,9 @@
 
 这是官方 mGBA 0.10.5 模拟核心封装，运行原游戏程序，**不是彻底反编译后的原生 PC/Godot 重写**，没有保证与真实硬件在所有场景绝对一致。公开下载包不包含原 ROM。
 
-[详细使用说明](windows-player/使用说明.txt) · [启动器源码](windows-player/launcher.c) · [Windows 检查](../../actions/workflows/windows-player.yml)
+[详细使用说明](windows-player/使用说明.txt) · [启动器源码](windows-player/launcher.c) · [Windows 检查](https://github.com/2502511622-rgb/rouge/actions/workflows/windows-player.yml)
 
-已验证：官方 HTTPS 发行包可完整解压、包内文件哈希、EXE 的 AMD64/GUI 格式；同版本 Linux 核心运行原 ROM 并确定性重放至村庄。Windows 自动检查覆盖引擎启动、Unicode 路径、哈希和错误 ROM 拒绝；请查看 Actions 的实际运行结果，不把未执行或失败的检查视为通过。尚未验证 Windows 交互操作、声音、存档和完整通关。
+已验证：官方 HTTPS 发行包可完整解压、包内文件哈希、EXE 的 AMD64/GUI 格式；同版本 Linux 核心运行原 ROM 并确定性重放至村庄。[Windows 自动检查已通过](https://github.com/2502511622-rgb/rouge/actions/runs/39130048780)，覆盖引擎启动、Unicode 路径、哈希和错误 ROM 拒绝。尚未验证 Windows 交互操作、声音、存档和完整通关。
 
 ---
 

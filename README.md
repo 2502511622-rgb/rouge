@@ -1,3 +1,15 @@
+# Windows 启动器与 Godot 逆向工作台
+
+## Switch 本地游戏启动器（Windows EXE）
+
+[直接下载 SwitchLauncher.exe](https://github.com/2502511622-rgb/rouge/raw/refs/heads/main/switch-launcher/SwitchLauncher.exe) · [完整包与源码](https://github.com/2502511622-rgb/rouge/raw/refs/heads/main/SwitchLauncher-Windows-x64.zip) · [操作说明](switch-launcher/使用说明.txt)
+
+运行后选择已安装的模拟器 EXE，选好“直接路径”或“-g”参数模式，添加本地游戏并双击启动。支持中文/空格路径、多选添加、拖入文件、保存游戏列表和配置。它只负责启动，不附带模拟器、游戏、密钥或固件；存档和模拟器配置仍由你的模拟器管理。实际兼容方式以本地模拟器版本为准。
+
+[源码](switch-launcher/launcher.c) · [Windows 自动检查](https://github.com/2502511622-rgb/rouge/actions/workflows/switch-launcher.yml)
+
+---
+
 # 光明之魂 · Windows 游玩包 + Godot 逆向工作台
 
 ## Windows 10/11 64 位游玩

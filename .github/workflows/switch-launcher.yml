@@ -1,0 +1,19 @@
+name: Switch launcher validation
+on:
+  push:
+    paths:
+      - 'switch-launcher/**'
+      - 'SwitchLauncher-Windows-x64.zip'
+      - '.github/workflows/switch-launcher.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check launch arguments, configuration and GUI on Windows
+        shell: pwsh
+        run: ./switch-launcher/test_windows.ps1 -Archive ./SwitchLauncher-Windows-x64.zip

@@ -3,3 +3,11 @@ godot/.godot/
 *.gba
 *.sav
 **/*.import
+
+# User-owned Switch content and credentials stay local.
+*.xci
+*.nsp
+*.nro
+*.nso
+prod.keys
+title.keys

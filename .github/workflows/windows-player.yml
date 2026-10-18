@@ -1,0 +1,19 @@
+name: Windows player validation
+on:
+  push:
+    paths:
+      - 'windows-player/**'
+      - 'ShiningSoul-Windows-x64.zip'
+      - '.github/workflows/windows-player.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Windows launcher and official engine
+        shell: pwsh
+        run: ./windows-player/test_windows.ps1 -Archive ./ShiningSoul-Windows-x64.zip

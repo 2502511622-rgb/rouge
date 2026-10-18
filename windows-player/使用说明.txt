@@ -1,0 +1,59 @@
+光明之魂 · Windows 启动包
+========================
+
+运行要求：Windows 10/11 64 位。请把 ZIP 完整解压到桌面等可写目录。
+双击 ShiningSoul.exe。不要只复制 EXE，engine 子目录必须保留。
+
+首次运行
+--------
+选择此前上传的《光明之魂1.gba》文件（8 MiB，AHUJ 汉化版本）。
+启动器会验证完整 SHA-256，并将 ROM 复制到你的用户目录。
+公开下载包不附带原始游戏 ROM。首次导入完成后，再次双击 EXE 即可进入游戏。
+如果停在汉化组标题画面，请按 X（GBA A 键）继续；游戏标题处按 Enter。
+
+默认按键
+--------
+方向键：移动/选择
+X：GBA A（确认/游戏中相应动作）
+Z：GBA B（取消/游戏中相应动作）
+A：GBA L
+S：GBA R
+Enter：Start
+Backspace：Select
+实际动作由原游戏规则决定。可在模拟器“工具/设置”中重新配置键盘或手柄。
+
+保存和备份
+----------
+游戏内存档：%LOCALAPPDATA%\ShiningSoulPlayer\Saves
+即时状态：%LOCALAPPDATA%\ShiningSoulPlayer\States
+截图：%LOCALAPPDATA%\ShiningSoulPlayer\Screenshots
+导入的 ROM：%LOCALAPPDATA%\ShiningSoulPlayer\ROMs\ShiningSoul.gba
+请正常关闭模拟器，让其写入存档；迁移电脑时备份上述目录。
+游戏内存档和模拟器即时状态是不同的文件。
+
+实现范围
+--------
+这是官方 mGBA 0.10.5 模拟核心的启动封装，运行原 ROM 中的程序、画面、音乐和逻辑。
+它不是彻底反编译的原生 PC/Godot 重写，也不保证与真实硬件在所有行为上绝对一致。
+此前 Godot 资源恢复工作台是单独的编辑工程。
+当前没有通关验证，也没有承诺联机行为一致。
+
+校验与诊断
+----------
+启动器仅接受已分析的这份 ROM，SHA-256：
+04489e661a493d4f5ef7e0a3e91e3c30094cbf4286cf2b6eee63479b4c3721ce
+
+PowerShell 中运行：
+  $p = Start-Process .\ShiningSoul.exe -ArgumentList '--self-test' -Wait -PassThru
+  $p.ExitCode
+0 表示官方引擎文件校验及 --version 启动检查通过。
+这不是游戏通关或所有功能的测试。
+
+第三方来源与许可证
+------------------
+engine 中的 mGBA 文件来自官方 Windows 64 位便携发行包，未修改。
+https://github.com/mgba-emu/mgba/releases/tag/0.10.5
+源代码：https://github.com/mgba-emu/mgba/tree/0.10.5
+发行包已保留官方 LICENSE.txt、licenses 目录、README 和其他随附文件。
+第三方组件许可证以对应目录中的文本为准。
+启动器源码和构建说明在 source 目录。发布校验信息在 upstream.json、checksums.json。

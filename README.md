@@ -8,6 +8,8 @@
 
 [源码](switch-launcher/launcher.c) · [Windows 自动检查](https://github.com/2502511622-rgb/rouge/actions/workflows/switch-launcher.yml)
 
+[Windows 自动检查已通过](https://github.com/2502511622-rgb/rouge/actions/runs/39137127913)：验证两种模式的实际 argv、工作目录、中文/空格/特殊字符路径、无效模式拒绝、Unicode 配置原子保存，以及真实窗口启动与正常关闭。未验证具体 Switch 模拟器或游戏的运行兼容性。
+
 ---
 
 # 光明之魂 · Windows 游玩包 + Godot 逆向工作台

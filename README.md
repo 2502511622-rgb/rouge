@@ -1,3 +1,11 @@
+# 模因乱斗：抽象食物链
+
+[下载完整 Godot 工程包](Meme-Brawl-Godot.zip) · [打开独立 Godot 工程](meme-brawl/project.godot) · [运行、键位与完成范围](meme-brawl/README.md)
+
+三角色横版格斗原型：咕咕嘎嘎、刀盾狗、妙脆角猫；含 AI 对战、街机巡回、练习、搓招、EX、CA、V 技能与四个舞台。Godot 4.3+ 打开工程按 F5，F1 查看招式。当前使用程序像素美术和原创合成音效，原版梗录音与完整商业级动画尚未制作。
+
+---
+
 # Windows 启动器与 Godot 逆向工作台
 
 ## Switch 本地游戏启动器（Windows EXE）

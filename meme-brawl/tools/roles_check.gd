@@ -19,19 +19,19 @@ func run() -> void:
 		f.meter = 3
 		var event := InputEventKey.new()
 		event.pressed = true
-		event.physical_keycode = KEY_1
+		event.physical_keycode = arena.controls.key("skill1")
 		arena._unhandled_key_input(event)
-		assert(f.action_type == "special" and f.last_special_move == 0,"Number skills must work in a real match")
+		assert(f.action_type == "special" and f.last_special_move == 0,"Bound skills must work in a real match")
 		f.cooldown = 0
 		f.active = 0
-		event.physical_keycode = KEY_2
+		event.physical_keycode = arena.controls.key("skill2")
 		event.shift_pressed = true
 		arena._unhandled_key_input(event)
-		assert(f.last_special_move == 1 and f.meter == 2,"Shift number spends one bar")
+		assert(f.last_special_move == 1 and f.meter == 2,"Shift skill binding spends one bar")
 		f.cooldown = 0
 		f.active = 0
 		f.meter = 3
-		event.physical_keycode = KEY_4
+		event.physical_keycode = arena.controls.key("super")
 		event.shift_pressed = false
 		arena._unhandled_key_input(event)
 		assert(f.action_type == "super" and f.meter == 0)
@@ -48,7 +48,7 @@ func run() -> void:
 		if kind == 3: assert(arena.fighters[0].v_meter < 90,"Frog extended combo must spend V resource")
 	fixture(0)
 	var a = arena.fighters[0]
-	a.press(KEY_1)
+	a.press(arena.controls.key("skill1"))
 	var sonic_speed: float = arena.projectiles[0].velocity.x
 	var sonic_recovery: float = a.cooldown
 	a.ai_time = 999
@@ -58,12 +58,12 @@ func run() -> void:
 	assert(a.velocity.x < 0,"Ranged AI retreats from close pressure")
 	fixture(2)
 	a = arena.fighters[0]
-	a.press(KEY_1)
+	a.press(arena.controls.key("skill1"))
 	assert(sonic_speed > arena.projectiles[0].velocity.x and sonic_recovery < a.cooldown)
 	fixture(1)
 	a = arena.fighters[0]
 	var b = arena.fighters[1]
-	a.press(KEY_1)
+	a.press(arena.controls.key("skill1"))
 	var before: float = a.hp
 	a.receive({"damage":100,"projectile":true},b)
 	assert(a.hp == before and a.shield_guard > 0,"Shield rush blocks a high projectile")
@@ -75,13 +75,13 @@ func run() -> void:
 	for i in range(5):
 		a.active = 0
 		a.cooldown = 0
-		a.press(KEY_3)
+		a.press(arena.controls.key("skill3"))
 	assert(arena.cat_trap_count(0) == 3 and a.guard_time > 0 and a.v_time == 0)
 	arena.spawn_projectile(a,0,true)
 	arena.settle_trap(arena.projectiles[-1])
 	a.active = 0
 	a.cooldown = 0
-	a.press(KEY_3)
+	a.press(arena.controls.key("skill3"))
 	assert(arena.cat_trap_count(0) == 3,"Expired EX fragments must not bypass the placed-trap cap")
 	before = b.hp
 	var trap: Dictionary = arena.projectiles.filter(func(p): return p.trap and p.life > 0)[0]

@@ -1,7 +1,7 @@
 extends RefCounted
 ## Role lessons call the same actions, counters and collisions as the player.
 const MOVES = [0,1,0,1,2,0]
-const ROUTES = ["V 加速 · 1 远程压制 → 命中后 4","V 盾反接住攻击 → 4；1 举盾逼近","3 布角后撤 → 对手踩中陷阱 → 4","J → K → L → 2 → V → J → K → L → 2 → 4","V 蓄力 → 3 重击 → 4；贴身 G 重投","K 中距踢 → 1 重踢 → 4"]
+const ROUTES = ["{v} 加速 · {skill1} 远程压制 → 命中后 {super}","{v} 盾反接住攻击 → {super}；{skill1} 举盾逼近","{skill3} 布角后撤 → 对手踩中陷阱 → {super}","{light} → {medium} → {heavy} → {skill2} → {v} → {light} → {medium} → {heavy} → {skill2} → {super}","{v} 蓄力 → {skill3} 重击 → {super}；贴身 {throw} 重投","{medium} 中距踢 → {skill1} 重踢 → {super}"]
 var arena: Node2D
 var running := false
 var step := 0

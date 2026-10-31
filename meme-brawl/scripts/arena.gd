@@ -5,6 +5,14 @@ const Frames = preload("res://scripts/sprite_frames.gd")
 const Presentation = preload("res://scripts/fight_presentation.gd")
 const Fighter = preload("res://scripts/fighter.gd")
 const FONT = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
+var controls = preload("res://scripts/input_profile.gd").new()
+var settings_return := "select"
+var settings_was_paused := false
+var settings_backup: Dictionary = {}
+var capturing_action := ""
+var settings_message := "点击按键按钮，再按新键；保存后下次启动仍然生效。"
+var select_target := 0
+var hovered_character := -1
 var fighters: Array = []
 var projectiles: Array = []
 var effects: Array = []
@@ -67,6 +75,7 @@ var portrait_atlas: Texture2D
 var duo_atlases: Dictionary = {}
 
 func _ready() -> void:
+	if not "--smoke-test" in OS.get_cmdline_user_args(): controls.load_bindings()
 	combo_coach.arena = self
 	Frames.prewarm()
 	if ResourceLoader.exists("res://assets/art/meme_fighters_atlas.png"):
@@ -118,6 +127,7 @@ func clear_ui() -> void:
 
 func button(text: String, rect: Rect2, action: Callable, color := Color("303b4c")) -> void:
 	var b := Button.new()
+	b.focus_mode = Control.FOCUS_NONE
 	b.text = text
 	b.position = rect.position
 	b.size = rect.size
@@ -140,19 +150,123 @@ func button(text: String, rect: Rect2, action: Callable, color := Color("303b4c"
 	b.pressed.connect(action)
 	panel.add_child(b)
 
+func grid_rect(kind: int) -> Rect2:
+	return Rect2(365+(kind%3)*142,206+(kind/3)*124,132,114)
+
 func build_menu() -> void:
 	clear_ui()
-	for i in range(R.NAMES.size()):
-		button("%s\n%s" % [R.NAMES[i],R.ROLES[i]], Rect2(105+(i%3)*320,247+(i/3)*147,300,58), choose.bind(i), R.COLORS[i].darkened(0.7) if selected != i else R.COLORS[i].darkened(0.4))
-	button("对手  ·  " + R.NAMES[rival],Rect2(105,466,300,40),cycle_rival)
-	button("舞台  ·  " + R.STAGES[stage],Rect2(425,466,300,40),cycle_stage)
-	button("AI  ·  " + ("标准" if difficulty == 1 else "激烈"),Rect2(745,466,300,40),cycle_difficulty)
-	button("开始对战  →",Rect2(105,519,300,48),start_match.bind(false,false),Color("805035"))
-	button("街机 · 食物链巡回",Rect2(425,519,300,48),start_match.bind(false,true),Color("435e59"))
-	button("练习 · 无限时间与能量",Rect2(745,519,300,48),start_match.bind(true,false),Color("5a466b"))
-	button("F3 演出鉴赏 · 72 秒",Rect2(105,579,300,36),start_demo,Color("5a3473"))
-	button("F1 招式与操作",Rect2(425,579,300,36),toggle_help)
-	button("声音 · "+("关闭" if muted else "开启")+" / M",Rect2(745,579,300,36),toggle_mute,Color("345367"))
+	for kind in range(R.NAMES.size()):
+		var b := Button.new()
+		b.position = grid_rect(kind).position
+		b.size = grid_rect(kind).size
+		b.focus_mode = Control.FOCUS_NONE
+		b.tooltip_text = R.NAMES[kind]+" · "+R.ROLES[kind]
+		for state in ["normal","hover","pressed","focus"]: b.add_theme_stylebox_override(state,StyleBoxEmpty.new())
+		b.pressed.connect(choose_grid.bind(kind))
+		b.mouse_entered.connect(hover_character.bind(kind))
+		b.mouse_exited.connect(hover_character.bind(-1))
+		panel.add_child(b)
+	button("1P · 选择角色",Rect2(365,153,200,35),set_select_target.bind(0),Color("23767b") if select_target == 0 else Color("252438"))
+	button("CPU · 选择对手",Rect2(581,153,200,35),set_select_target.bind(1),Color("873a72") if select_target == 1 else Color("252438"))
+	button("舞台 · "+R.STAGES[stage],Rect2(36,486,340,36),cycle_stage)
+	button("AI · "+("标准" if difficulty == 1 else "激烈"),Rect2(406,486,340,36),cycle_difficulty)
+	button("F2 · 设置 / 自定义键位",Rect2(776,486,340,36),open_settings,Color("4b3a67"))
+	button("对战  →",Rect2(36,538,340,46),start_match.bind(false,false),Color("2e797d"))
+	button("街机 · 食物链巡回",Rect2(406,538,340,46),start_match.bind(false,true),Color("6a467e"))
+	button("练习 · 角色演练",Rect2(776,538,340,46),start_match.bind(true,false),Color("8a4771"))
+	button("F1 · 招式与操作",Rect2(36,597,340,30),toggle_help)
+	button("F3 · 演出鉴赏",Rect2(406,597,340,30),start_demo)
+	button("M · 声音 "+("关闭" if muted else "开启"),Rect2(776,597,340,30),toggle_mute)
+
+func hover_character(kind: int) -> void:
+	hovered_character = kind
+
+func set_select_target(side: int) -> void:
+	select_target = side
+	build_menu()
+
+func choose_grid(kind: int) -> void:
+	if select_target == 0: selected = kind
+	else: rival = kind
+	build_menu()
+
+func hint(value: String) -> String:
+	return controls.hint(value)
+
+func open_settings() -> void:
+	if screen == "settings": return
+	controls.release_all()
+	settings_return = screen
+	settings_was_paused = paused
+	settings_backup = controls.bindings.duplicate()
+	capturing_action = ""
+	settings_message = "点击按键按钮，再按新键；Esc 取消当前录入。"
+	screen = "settings"
+	paused = true
+	show_help = false
+	for f in fighters: f.visible = false
+	panel.visible = true
+	build_settings()
+
+func build_settings() -> void:
+	clear_ui()
+	for index in range(controls.ORDER.size()):
+		var action: String = controls.ORDER[index]
+		var x := 300.0 if index < 10 else 840.0
+		var y := 144.0+(index%10)*37
+		button("等待按键…" if capturing_action == action else controls.label(action),Rect2(x,y,240,32),capture_binding.bind(action),Color("297d87") if capturing_action == action else Color("33334e"))
+	button("恢复默认 U / I / O / P",Rect2(60,552,330,44),reset_bindings)
+	button("取消修改",Rect2(411,552,250,44),close_settings.bind(false))
+	button("保存并返回",Rect2(682,552,410,44),close_settings.bind(true),Color("2d777b"))
+
+func capture_binding(action: String) -> void:
+	capturing_action = action
+	settings_message = "正在修改「%s」：按新键，Esc 取消录入。" % controls.LABELS[action]
+	build_settings()
+
+func reset_bindings() -> void:
+	controls.reset_defaults()
+	capturing_action = ""
+	settings_message = "已恢复默认。点击保存并返回以保留设置。"
+	build_settings()
+
+func close_settings(save: bool) -> void:
+	if save:
+		var error: Error = controls.save_bindings()
+		if error != OK:
+			settings_message = "保存失败："+error_string(error)+"；可重试或取消修改。"
+			return
+	else: controls.bindings = settings_backup.duplicate()
+	controls.release_all()
+	capturing_action = ""
+	screen = settings_return
+	paused = settings_was_paused
+	for f in fighters: f.visible = screen in ["fight","result"] and not paused and cinematic <= 0
+	clear_ui()
+	if screen == "select": build_menu()
+	elif paused:
+		button("继续对战",Rect2(426,285,300,50),resume)
+		button("F2 设置 / 修改键位",Rect2(426,350,300,50),open_settings)
+		button("返回角色选择",Rect2(426,415,300,50),back_to_menu)
+	elif screen == "result":
+		button("继续",Rect2(265,530,290,52),primary_result)
+		button("返回角色选择",Rect2(580,530,310,52),back_to_menu)
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey: controls.feed(event)
+	if screen != "settings" or not event is InputEventKey or not event.pressed or event.echo: return
+	var key: int = event.physical_keycode if event.physical_keycode != 0 else event.keycode
+	if capturing_action != "":
+		if key == KEY_ESCAPE:
+			capturing_action = ""
+			settings_message = "已取消录入；现有按键保持不变。"
+		else:
+			var error: String = controls.bind(capturing_action,key)
+			settings_message = error if error != "" else "已修改。点击保存并返回以保留设置。"
+			if error == "": capturing_action = ""
+		build_settings()
+	elif key == KEY_ESCAPE: close_settings(false)
+	get_viewport().set_input_as_handled()
 
 func choose(i: int) -> void:
 	selected = i
@@ -170,18 +284,10 @@ func cycle_difficulty() -> void:
 	difficulty = 1.45 if difficulty == 1 else 1.0
 	build_menu()
 
-func _unhandled_input(event: InputEvent) -> void:
-	if screen != "select" or show_help: return
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		for kind in range(R.NAMES.size()):
-			var card := Rect2(105+(kind%3)*320,157+(kind/3)*147,300,149)
-			if card.has_point(event.position):
-				choose(kind)
-				get_viewport().set_input_as_handled()
-				return
 
 func toggle_help() -> void:
 	show_help = not show_help
+	for f in fighters: f.visible = not show_help and not paused and screen in ["fight","result"] and cinematic <= 0
 	panel.visible = not show_help
 	queue_redraw()
 
@@ -197,6 +303,7 @@ func start_match(practice := false, tour := false) -> void:
 	new_round()
 
 func new_round() -> void:
+	controls.release_all()
 	clear_ui()
 	for f in fighters:
 		remove_child(f)
@@ -239,7 +346,11 @@ func new_round() -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo: return
-	var key: int = event.physical_keycode
+	var key: int = event.physical_keycode if event.physical_keycode != 0 else event.keycode
+	if screen == "settings": return
+	if key == KEY_F2:
+		open_settings()
+		return
 	if key == KEY_F3:
 		if demo_mode: stop_demo()
 		else: start_demo()
@@ -275,30 +386,37 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			paused = not paused
 			if paused:
 				button("继续对战",Rect2(426,285,300,50),resume)
-				button("返回角色选择",Rect2(426,350,300,50),back_to_menu)
+				button("F2 设置 / 修改键位",Rect2(426,350,300,50),open_settings)
+				button("返回角色选择",Rect2(426,415,300,50),back_to_menu)
 			else: clear_ui()
 		elif screen == "result":
 			back_to_menu()
 		return
 	if screen == "select":
+		if key == KEY_TAB: set_select_target(1-select_target)
+		if key in [KEY_LEFT,KEY_RIGHT,KEY_UP,KEY_DOWN]:
+			var current: int = selected if select_target == 0 else rival
+			var offset := -1 if key == KEY_LEFT else (1 if key == KEY_RIGHT else (-3 if key == KEY_UP else 3))
+			choose_grid(posmod(current+offset,6))
 		if key == KEY_ENTER: start_match()
-		if key == KEY_1: choose(0)
-		if key == KEY_2: choose(1)
-		if key == KEY_3: choose(2)
-		if key == KEY_4: choose(3)
-		if key == KEY_5: choose(4)
-		if key == KEY_6: choose(5)
+		if key == KEY_1: choose_grid(0)
+		if key == KEY_2: choose_grid(1)
+		if key == KEY_3: choose_grid(2)
+		if key == KEY_4: choose_grid(3)
+		if key == KEY_5: choose_grid(4)
+		if key == KEY_6: choose_grid(5)
 	elif screen == "fight" and not paused and not show_help and intro_time <= 0 and cinematic <= 0:
 		if training and key == KEY_F4: combo_help = not combo_help
 		elif training and key == KEY_F5: combo_coach.start()
 		elif training and key == KEY_R: new_round()
-		else: fighters[0].press(key,event.shift_pressed)
+		else: fighters[0].press(key,controls.ex_from_event(event))
 
 func resume() -> void:
 	paused = false
 	clear_ui()
 
 func back_to_menu() -> void:
+	controls.release_all()
 	demo_mode = false
 	panel.visible = true
 	screen = "select"
@@ -613,6 +731,9 @@ func center(y: float, value: String, size := 24, color := Color.WHITE) -> void:
 	text(Vector2((1152-width)*0.5,y),value,size,color)
 
 func _draw() -> void:
+	if screen == "settings":
+		draw_settings()
+		return
 	draw_stage()
 	if screen == "fight":
 		for f in fighters:
@@ -663,20 +784,30 @@ func draw_stage() -> void:
 		draw_line(Vector2(x+10,335),Vector2(x+52,294+i*9),Color("353a35"),7)
 	draw_rect(Rect2(0,540,1152,108),Color(0.02,0.025,0.035,0.36))
 
+func draw_settings() -> void:
+	draw_rect(Rect2(0,0,1152,648),Color("111121"))
+	text(Vector2(60,65),"设置 · 键盘映射",32,Color("7de8ed"))
+	text(Vector2(60,103),settings_message,17,Color("f1d397"))
+	for index in range(controls.ORDER.size()):
+		var action: String = controls.ORDER[index]
+		text(Vector2(60 if index < 10 else 600,167+(index%10)*37),controls.LABELS[action],18)
+	text(Vector2(60,527),"菜单控制键保留：F1–F5、Esc、Enter、Space、Tab、M 静音、R 练习重置。",15,Color("a49ab8"))
+	text(Vector2(60,629),"按键不允许重复；设置与招式提示同步更新。EX 可改为修饰键或其他空闲键。",15,Color("a49ab8"))
+
 func draw_help() -> void:
 	draw_rect(Rect2(0,0,1152,648),Color("121324"))
 	text(Vector2(67,65),R.NAMES[selected]+" · 简易出招表",30,R.COLORS[selected])
 	text(Vector2(67,108),R.ROLES[selected],24,Color("f0d18e"))
-	text(Vector2(67,151),"WASD 移动 / 跳 / 蹲  ·  J/K/L 快、中、重攻击  ·  远离对手=格挡",20)
+	text(Vector2(67,151),hint("{left}/{right} 移动 · {jump} 跳 · {crouch} 蹲 · {light}/{medium}/{heavy} 攻击 · 远离=格挡"),20)
 	for move in range(3):
-		text(Vector2(70,215+move*51),str(move+1)+"   "+R.SPECIALS[selected][move],24,R.COLORS[selected])
+		text(Vector2(70,215+move*51),controls.label("skill"+str(move+1))+"   "+R.SPECIALS[selected][move],24,R.COLORS[selected])
 		text(Vector2(450,215+move*51),R.SKILL_HELP[selected][move],20)
-	text(Vector2(70,375),"4   "+R.CA[selected]+"  ·  大招需要 3 格能量",23,Color("f2d494"))
-	text(Vector2(70,418),"V   "+R.V[selected]+"  ·  "+R.V_HELP[selected],19)
-	text(Vector2(70,462),"Shift + 1/2/3 = 强化技能（1 格）  ·  G 投技  ·  B 爆发  ·  T 挑衅",18)
-	text(Vector2(70,509),R.TACTICS[selected],21,R.COLORS[selected])
-	text(Vector2(70,554),"练习 F4 玩法提示 / F5 角色演练  ·  R 重置  ·  F1 或 Esc 关闭",18)
-	text(Vector2(70,603),"进阶可用 U/I/O 腿技与传统搓招；数字技能在正式对战同样可用。",16,Color("9cabb8"))
+	text(Vector2(70,375),hint("{super}   ")+R.CA[selected]+"  ·  大招需要 3 格能量",23,Color("f2d494"))
+	text(Vector2(70,418),hint("{v}   "+R.V[selected]+"  ·  "+R.V_HELP[selected]),19)
+	text(Vector2(70,462),hint("{ex} + 技能 = 强化（1 格） · {throw} 投技 · {trigger} 爆发 · {taunt} 挑衅"),18)
+	text(Vector2(70,509),hint(R.TACTICS[selected]),21,R.COLORS[selected])
+	text(Vector2(70,554),"F2 修改键位 · 练习 F4 玩法提示 / F5 角色演练 · F1 或 Esc 关闭",18)
+	text(Vector2(70,603),hint("进阶腿技 {kick_light}/{kick_medium}/{kick_heavy}；传统搓招可用。所有技能按键以设置为准。"),16,Color("9cabb8"))
 
 func run_dlc_checks() -> void:
 	# Frogs must earn a hit-confirm before spending their cancel resource.
@@ -748,7 +879,7 @@ func run_dlc_checks() -> void:
 	a.cooldown = 0
 	a.motion = [[2,0],[3,0.1],[6,0.2],[2,0.3],[3,0.4],[6,0.5]]
 	a.meter = 3
-	a.press(KEY_U)
+	a.press(controls.key("kick_light"))
 	assert(a.meter == 0, "Kangaroo CA uses kick")
 	cinematic = 0
 	projectiles.clear()
@@ -963,11 +1094,8 @@ func run_presentation_checks() -> void:
 	assert(demo_segment == 1 and selected == 1)
 	update_demo(60)
 	assert(not demo_mode and screen == "select","Showcase ends cleanly after six scenes")
-	var click := InputEventMouseButton.new()
-	click.pressed = true
-	click.button_index = MOUSE_BUTTON_LEFT
-	click.position = Vector2(255,350)
-	_unhandled_input(click)
+	set_select_target(0)
+	panel.get_child(3).pressed.emit()
 	assert(selected == 3,"Character portraits select their whole card, not only the label button")
 	print("PRESENTATION PASS: scripted 72-second showcase / scheduled CA / KO / next scene / automatic exit")
 
@@ -1109,6 +1237,9 @@ func run_smoke() -> void:
 			assert(visual.state == clip and visual.clock > 0,"Animation playback must advance")
 		print("ANIMATION PASS: ",R.NAMES[character]," / ",visual.CLIPS.size()," clips")
 	back_to_menu()
-	assert(panel.get_child_count() == 15,"Selection menu buttons")
+	assert(panel.get_child_count() == 17,"Six portrait targets / two side selectors / nine menu buttons")
 	print("MEME BRAWL SMOKE PASS")
 	get_tree().quit(0)
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT: controls.release_all()

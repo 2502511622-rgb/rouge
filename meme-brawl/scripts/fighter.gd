@@ -140,8 +140,8 @@ func tick(dt: float, controlled: bool) -> void:
 	queue_redraw()
 
 func player_input(_dt: float) -> void:
-	var x := float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A))
-	var down := Input.is_physical_key_pressed(KEY_S)
+	var x := float(arena.controls.pressed("right")) - float(arena.controls.pressed("left"))
+	var down: bool = arena.controls.pressed("crouch")
 	var dir := 5
 	if x * facing > 0: dir = 6
 	if x * facing < 0: dir = 4
@@ -163,38 +163,39 @@ func player_input(_dt: float) -> void:
 
 func press(key: int, ex_modifier := false) -> void:
 	if hp <= 0 or stun > 0: return
-	if key >= KEY_1 and key <= KEY_3:
-		special(key-KEY_1,ex_modifier or Input.is_physical_key_pressed(KEY_SHIFT))
+	var action: String = arena.controls.action_for(key)
+	if action in ["skill1","skill2","skill3"]:
+		special(["skill1","skill2","skill3"].find(action),ex_modifier or arena.controls.pressed("ex"))
 		return
-	if key == KEY_4:
+	if action == "super":
 		super_move()
 		return
-	if key == KEY_W and (grounded or (kind == 0 and v_time > 0 and jumps < 2)) and active <= 0:
+	if action == "jump" and (grounded or (kind == 0 and v_time > 0 and jumps < 2)) and active <= 0:
 		grounded = false
 		jumps += 1
 		velocity.y = -660 if kind == 5 and trigger_time > 0 else -540
 		return
-	if key == KEY_B:
+	if action == "trigger":
 		trigger()
 		return
-	if key == KEY_V:
+	if action == "v":
 		v_skill()
 		return
-	if key == KEY_T and cooldown <= 0:
+	if action == "taunt" and cooldown <= 0:
 		say(R.TAUNT[kind])
 		visual.play("taunt",0.8)
 		cooldown = 0.65
 		arena.sound(kind, "taunt")
 		return
-	if key == KEY_G:
+	if action == "throw":
 		throw_move()
 		return
-	var keys := [KEY_J, KEY_K, KEY_L, KEY_U, KEY_I, KEY_O]
-	var index := keys.find(key)
+	var attacks := ["light","medium","heavy","kick_light","kick_medium","kick_heavy"]
+	var index := attacks.find(action)
 	if index < 0: return
 	var kick := index >= 3 or kind == 5
 	var strength := index % 3
-	var ex := Input.is_physical_key_pressed(KEY_SHIFT)
+	var ex: bool = ex_modifier or arena.controls.pressed("ex")
 	if strength == 2:
 		var previous := last_heavy_kick if kick else last_heavy
 		ex = ex or clock - previous < 0.28

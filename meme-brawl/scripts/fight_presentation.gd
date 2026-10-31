@@ -46,6 +46,10 @@ func middle(y: float, value: String, size := 24, color := Color.WHITE, display :
 	var width: float = font.get_string_size(value,HORIZONTAL_ALIGNMENT_LEFT,-1,size).x
 	label(Vector2((1152-width)/2,y),value,size,color,display)
 
+func middle_fit(y: float, value: String, width: float, size: int, color: Color) -> void:
+	while size > 10 and CJK.get_string_size(value,HORIZONTAL_ALIGNMENT_LEFT,-1,size).x > width: size -= 1
+	middle(y,value,size,color)
+
 func right(at: Vector2, value: String, size := 18, color := Color.WHITE, display := false) -> void:
 	var font = DISPLAY if display else CJK
 	var width: float = font.get_string_size(value,HORIZONTAL_ALIGNMENT_LEFT,-1,size).x
@@ -56,7 +60,8 @@ func cut_panel(rect: Rect2, color: Color, notch := 10.0) -> void:
 	var e := rect.end
 	draw_colored_polygon(PackedVector2Array([p+Vector2(notch,0),Vector2(e.x,p.y),e-Vector2(notch,0),Vector2(p.x,e.y)]),color)
 
-func actor(kind: int, rect: Rect2, special := false) -> void:
+func actor(kind: int, rect: Rect2, special := false, mirrored := false) -> void:
+	if mirrored: draw_set_transform(Vector2(rect.get_center().x*2,0),0,Vector2(-1,1))
 	var duo: bool = kind in [0,2]
 	var sheet := ("gugu_actions.png" if kind == 0 else "cat_actions.png") if duo else "meme_fighters_atlas.png"
 	var index := (10 if special else 0) if duo else kind+(18 if special else 0)
@@ -65,6 +70,8 @@ func actor(kind: int, rect: Rect2, special := false) -> void:
 	if kind == 2 and not special:
 		for chip in Frames.attachments(pose,rect,true):
 			draw_colored_polygon(chip,GOLD)
+
+	if mirrored: draw_set_transform(Vector2.ZERO)
 
 func _draw() -> void:
 	if arena == null: return
@@ -87,28 +94,45 @@ func _draw() -> void:
 		draw_rect(Rect2(0,645,1152*clampf(arena.demo_clock/72,0,1),3),PINK)
 
 func draw_selection() -> void:
-	draw_rect(Rect2(0,0,1152,648),Color(0.035,0.025,0.075,0.94))
-	for i in range(12):
-		var x := float(i*126-200)+fmod(clock*10,126)
-		draw_line(Vector2(x,648),Vector2(x+330,0),Color(0.5,0.25,0.8,0.08),30)
-	draw_colored_polygon(selection_wedge(),Color(0.7,0.06,0.42,0.12))
-	label(Vector2(100,75),"MEME BRAWL",58,Color.WHITE,true)
-	label(Vector2(105,116),"模因乱斗：抽象食物链",27,GOLD)
-	right(Vector2(1045,67),"CHARACTER SELECT",20,PINK,true)
-	right(Vector2(1045,103),"6 FIGHTERS  /  FIRST TO 2",14,CYAN,true)
-	label(Vector2(105,141),"选择你的食物链位置",13,Color("8f8caa"))
+	draw_rect(Rect2(0,0,1152,648),Color("10101d"))
+	draw_colored_polygon(PackedVector2Array([Vector2(0,0),Vector2(470,0),Vector2(305,486),Vector2(0,486)]),Color("122e3e"))
+	draw_colored_polygon(PackedVector2Array([Vector2(682,0),Vector2(1152,0),Vector2(1152,486),Vector2(847,486)]),Color("36172e"))
+	for i in range(14):
+		var x := float(i*110-220)+fmod(clock*14,110)
+		draw_line(Vector2(x,486),Vector2(x+230,0),Color(0.5,0.35,0.8,0.07),20)
+	draw_line(Vector2(0,90),Vector2(1152,90),Color("645875"),1)
+	middle(65,"CHARACTER SELECT",51,Color.WHITE,true)
+	middle(91,"模因乱斗 · 抽象食物链",16,GOLD)
+	label(Vector2(36,117),"1P / PLAYER",15,CYAN,true)
+	right(Vector2(1116,117),"CPU / RIVAL",15,PINK,true)
+	label(Vector2(36,149),R.NAMES[arena.selected],29,Color.WHITE)
+	right(Vector2(1116,149),R.NAMES[arena.rival],29,Color.WHITE)
+	label(Vector2(0,385),"%02d" % (arena.selected+1),178,Color(0.25,0.85,1,0.08),true)
+	right(Vector2(1152,385),"%02d" % (arena.rival+1),178,Color(1,0.25,0.65,0.08),true)
+	actor(arena.selected,Rect2(22,165,300,266))
+	actor(arena.rival,Rect2(830,165,300,266),false,true)
+	label(Vector2(36,451),R.ROLES[arena.selected],16,CYAN)
+	right(Vector2(1116,451),R.ROLES[arena.rival],16,PINK)
+	label(Vector2(36,473),"HP %d   /   SPEED %d" % [R.HP[arena.selected],R.SPEED[arena.selected]],12,Color("a0b1c2"),true)
+	right(Vector2(1116,473),"HP %d   /   SPEED %d" % [R.HP[arena.rival],R.SPEED[arena.rival]],12,Color("b9a3ba"),true)
+	middle(135,"CHOOSE YOUR FIGHTER",13,Color("91899f"),true)
 	for kind in range(6):
-		var x := 105+(kind%3)*320
-		var y := 157+(kind/3)*147
-		var selected: bool = kind == arena.selected
-		cut_panel(Rect2(x,y,300,149),Color("342047") if selected else Color("1b192c"))
-		draw_rect(Rect2(x,y,4,90),PINK if selected else Color("47415b"))
-		label(Vector2(x+14,y+29),"0%d" % (kind+1),20,PINK if selected else Color("706982"),true)
-		label(Vector2(x+14,y+56),"HP  %d" % R.HP[kind],13,Color("c5bed2"),true)
-		label(Vector2(x+14,y+76),"SPD  %d" % R.SPEED[kind],12,Color("817a98"),true)
-		actor(kind,Rect2(x+166,y-10,112,112))
-		if selected: label(Vector2(x+75,y+26),"P1",15,CYAN,true)
-	middle(635,"1–6 选角  ·  Enter 开战  ·  F3 演出鉴赏  ·  M 静音",14,Color("9992b1"))
+		var rect: Rect2 = arena.grid_rect(kind)
+		var is_player: bool = kind == arena.selected
+		var is_rival: bool = kind == arena.rival
+		cut_panel(rect,Color("34364c") if is_player or is_rival else Color("20202e"),8)
+		actor(kind,Rect2(rect.position+Vector2(16,-2),Vector2(100,94)))
+		label(rect.position+Vector2(8,106),R.NAMES[kind],16,Color.WHITE)
+		if is_player:
+			draw_rect(rect.grow(2),CYAN,false,3)
+			draw_rect(Rect2(rect.position-Vector2(2,2),Vector2(34,20)),CYAN)
+			label(rect.position+Vector2(3,14),"1P",13,INK,true)
+		if is_rival:
+			draw_rect(rect.grow(-3),PINK,false,2)
+			draw_rect(Rect2(rect.position+Vector2(94,-2),Vector2(40,20)),PINK)
+			label(rect.position+Vector2(97,14),"CPU",11,INK,true)
+		if kind == arena.hovered_character: draw_rect(rect.grow(5),Color(1,1,1,0.6),false,1)
+	middle(466,"方向键移动  ·  Tab 切换 1P / CPU  ·  Enter 开战",12,Color("a79bb7"))
 
 func selection_wedge() -> PackedVector2Array:
 	return PackedVector2Array([Vector2(790,0),Vector2(1152,0),Vector2(1152,648),Vector2(440,648)])
@@ -183,17 +207,17 @@ func draw_hud() -> void:
 	cut_panel(Rect2(526,12,100,86),Color("392356"),15)
 	middle(76,"∞" if arena.training else "%02d" % ceili(arena.time_left),53,Color("ff927c") if arena.time_left <= 10 else Color.WHITE,not arena.training)
 	middle(115,"FINAL ROUND" if arena.round_wins == [1,1] else "ROUND %d" % arena.round_number,12,GOLD,true)
-	if arena.training: middle(151,"TRAINING / 数字技能 · F4 玩法提示 · F5 角色演练",13,Color("b8acd2"))
+	if arena.training: middle(151,arena.hint("TRAINING / {skill1} {skill2} {skill3} 技能 · {super} 大招 · F4 提示 · F5 演练"),13,Color("b8acd2"))
 	else: middle(151,R.STAGES[arena.stage],12,Color("aba2bc"))
 	if arena.training and arena.screen == "fight" and arena.combo_help and arena.intro_time <= 0 and arena.cinematic <= 0:
 		cut_panel(Rect2(336,194,480,82),Color(0.035,0.025,0.075,0.85),12)
 		middle(217,R.ROLES[arena.selected],15,GOLD)
-		middle(242,arena.combo_coach.ROUTES[arena.selected],15,Color("dcefff"))
-		middle(264,arena.combo_coach.status if arena.combo_coach.status != "" else R.TACTICS[arena.selected],12,Color("a8a1b9"))
+		middle_fit(242,arena.hint(arena.combo_coach.ROUTES[arena.selected]),452,15,Color("dcefff"))
+		middle(264,arena.combo_coach.status if arena.combo_coach.status != "" else arena.hint(R.TACTICS[arena.selected]),12,Color("a8a1b9"))
 	if arena.screen == "result":
 		middle(640,"Enter 继续  ·  Esc 返回角色选择",12,Color("a99abc"))
 	else:
-		middle(640,"WASD 移动 · J/K/L 攻击 · 1/2/3 技能 · Shift 强化 · 4 大招 · V 特色 · F1 帮助",12,Color("8e859f"))
+		middle(640,arena.hint("{left}/{right} 移动 · {jump} 跳 · {light}/{medium}/{heavy} 攻击 · {skill1}/{skill2}/{skill3} 技能 · {super} 大招 · F2 设置"),12,Color("8e859f"))
 
 func draw_super(side: int, f: Node2D, accent: Color) -> void:
 	var x := 24.0 if side == 0 else 662.0

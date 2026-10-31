@@ -29,6 +29,8 @@ func skill(f: Node2D, move: int, ex: bool) -> void:
 	emit(modes[f.kind][move],f.position+Vector2(0,-70),f.kind,0.66 if not ex else 0.85,f.facing,ex)
 	events[-1].owner = f.side
 	events[-1]["serial"] = f.action_serial
+	if f.kind == 2 and move == 2:
+		emit("shard",f.position+Vector2(f.facing*65,-16),f.kind,0.45,f.facing,ex)
 	if ex:
 		emit("charge",f.position+Vector2(0,-70),f.kind,0.22,f.facing,true)
 		events[-1].owner = f.side
@@ -102,6 +104,7 @@ func crescent(center: Vector2, radius: Vector2, start: float, length: float, wid
 		draw_colored_polygon(PackedVector2Array([outer[i],outer[i+1],inner[i+1],inner[i]]),color)
 	draw_polyline(outer,Color(1,1,0.95,color.a*0.85),1.5)
 func streak(a: Vector2, b: Vector2, width: float, color: Color) -> void:
+	if width < 0.08 or color.a < 0.015 or a.distance_squared_to(b) < 0.5: return
 	var normal := (b-a).normalized().orthogonal()*width
 	draw_colored_polygon(PackedVector2Array([a,b+normal,b-normal]),color)
 func chip(at: Vector2, size: float, angle: float, color: Color) -> void:

@@ -291,11 +291,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	elif screen == "fight" and not paused and not show_help and intro_time <= 0 and cinematic <= 0:
 		if training and key == KEY_F4: combo_help = not combo_help
 		elif training and key == KEY_F5: combo_coach.start()
-		elif training and key >= KEY_1 and key <= KEY_3:
-			fighters[0].special(key-KEY_1,event.shift_pressed)
-		elif training and key == KEY_4: fighters[0].super_move()
 		elif training and key == KEY_R: new_round()
-		else: fighters[0].press(key)
+		else: fighters[0].press(key,event.shift_pressed)
 
 func resume() -> void:
 	paused = false
@@ -362,9 +359,26 @@ func resolve_overlap() -> void:
 
 func spawn_projectile(source: Node2D, offset: float, empowered: bool) -> void:
 	var flat: bool = source.kind == 2 and source.horns > 0
-	projectiles.append({"position":source.position+Vector2(source.facing*52,-75),"velocity":Vector2(source.facing*(270 if source.kind == 0 else 340),0),"owner":source.side,"kind":source.kind,"life":3.5,"ex":empowered,"trap":false,"bounced":false,"delay":offset/55.0*0.12,"age":0.0,"flat":flat,"serial":source.action_serial,"damage":32 if flat else (80 if empowered else 65)})
+	projectiles.append({"position":source.position+Vector2(source.facing*52,-75),"velocity":Vector2(source.facing*(500 if source.kind == 0 else (250 if source.kind == 2 else 340)),0),"owner":source.side,"kind":source.kind,"life":3.5,"ex":empowered,"trap":false,"bounced":false,"delay":offset/55.0*0.12,"age":0.0,"flat":flat,"serial":source.action_serial,"damage":32 if flat else (80 if empowered else 65)})
+
+func cat_trap_count(side: int) -> int:
+	return projectiles.filter(func(p): return p.kind == 2 and p.trap and p.owner == side and p.life > 0).size()
+
+func place_cat_trap(source: Node2D, offset: float, empowered: bool) -> void:
+	if cat_trap_count(source.side) >= 3:
+		for p in projectiles:
+			if p.kind == 2 and p.trap and p.owner == source.side and p.life > 0:
+				projectiles.erase(p)
+				break
+	var flat: bool = source.horns > 0
+	projectiles.append({"position":Vector2(clampf(source.position.x+source.facing*(65+offset),80,1072),516),"velocity":Vector2.ZERO,"owner":source.side,"kind":2,"life":5.0 if empowered else 4.0,"ex":empowered,"trap":true,"bounced":false,"delay":0.0,"age":0.0,"flat":flat,"serial":source.action_serial,"damage":12 if flat else (28 if empowered else 20)})
 
 func settle_trap(p: Dictionary) -> void:
+	if cat_trap_count(int(p.owner)) >= 3:
+		for old in projectiles:
+			if old != p and old.kind == 2 and old.trap and old.owner == p.owner and old.life > 0:
+				old.life = 0
+				break
 	p.trap = true
 	p.position.y = 516
 	p.velocity = Vector2.ZERO
@@ -394,7 +408,7 @@ func tick_projectiles(dt: float) -> void:
 		if p.trap:
 			touches = target.grounded and absf(target.position.x-p.position.x) < 38 and target.position.y > 490
 		if touches:
-			target.receive({"cancelable":true,"serial":p.serial,"special":true,"damage":p.damage,"push":65 if p.trap else 150,"low":p.trap,"projectile":true,"hitstun":0.42 if p.trap else 0.38},fighters[int(p.owner)])
+			target.receive({"cancelable":true,"serial":p.serial,"special":true,"damage":p.damage,"push":65 if p.trap else (210 if p.kind == 0 else 150),"low":p.trap,"projectile":true,"hitstun":0.42 if p.trap else 0.38},fighters[int(p.owner)])
 			if p.kind == 5 and not p.bounced:
 				p.position.y = 515
 				p.velocity.y = -250
@@ -650,20 +664,19 @@ func draw_stage() -> void:
 	draw_rect(Rect2(0,540,1152,108),Color(0.02,0.025,0.035,0.36))
 
 func draw_help() -> void:
-	draw_rect(Rect2(35,22,1082,605),Color("111b29"))
-	text(Vector2(67,65),"荒野格斗手册 · " + R.NAMES[selected] + " / F1 或 Esc 关闭",28,Color("efcf95"))
-	text(Vector2(67,106),"W 跳跃 · A/D 移动 · S 蹲下 · 远离=格挡 · 远离+S=蹲防",20)
-	text(Vector2(67,143),"J/K/L 拳 · U/I/O 腿 · G 投 · V 技能 · B 触发（新角色）· T 挑衅",20)
+	draw_rect(Rect2(0,0,1152,648),Color("121324"))
+	text(Vector2(67,65),R.NAMES[selected]+" · 简易出招表",30,R.COLORS[selected])
+	text(Vector2(67,108),R.ROLES[selected],24,Color("f0d18e"))
+	text(Vector2(67,151),"WASD 移动 / 跳 / 蹲  ·  J/K/L 快、中、重攻击  ·  远离对手=格挡",20)
 	for move in range(3):
-		text(Vector2(67,200+move*44),R.COMMANDS[selected][move]+"   "+R.SPECIALS[selected][move],22,R.COLORS[selected])
-		text(Vector2(580,200+move*44),R.EX[selected][move],19,Color("f0d18b"))
-	text(Vector2(67,346),"V · "+R.V[selected]+" / "+R.V_HELP[selected],20)
-	text(Vector2(67,390),"B · "+R.TRIGGERS[selected]+" / 新角色需满 100 V 槽，持续 8 秒",20,Color("ffbb8f"))
-	text(Vector2(67,434),"CA · "+R.CA[selected]+"   "+R.CA_COMMANDS[selected],23,Color("f2d494"))
-	text(Vector2(67,478),"方向相对朝向 · 0.85 秒缓冲 · Shift+必杀 = EX（1 格）· CA 消耗 3 格",18)
-	text(Vector2(67,520),"原三角克制保留 +8%；新角色无额外属性克制。投技可破当身与霸体。",18)
-	text(Vector2(67,564),"奶蛙：触发时防御降低 / 牛来：蓄力受击清空 / 袋鼠：触发踢技为中段",18)
-	text(Vector2(67,602),"连段 J→K→L→必杀→CA · 练习 F4 提示 / F5 连段演练 · F3 鉴赏",16,Color("9cabb8"))
+		text(Vector2(70,215+move*51),str(move+1)+"   "+R.SPECIALS[selected][move],24,R.COLORS[selected])
+		text(Vector2(450,215+move*51),R.SKILL_HELP[selected][move],20)
+	text(Vector2(70,375),"4   "+R.CA[selected]+"  ·  大招需要 3 格能量",23,Color("f2d494"))
+	text(Vector2(70,418),"V   "+R.V[selected]+"  ·  "+R.V_HELP[selected],19)
+	text(Vector2(70,462),"Shift + 1/2/3 = 强化技能（1 格）  ·  G 投技  ·  B 爆发  ·  T 挑衅",18)
+	text(Vector2(70,509),R.TACTICS[selected],21,R.COLORS[selected])
+	text(Vector2(70,554),"练习 F4 玩法提示 / F5 角色演练  ·  R 重置  ·  F1 或 Esc 关闭",18)
+	text(Vector2(70,603),"进阶可用 U/I/O 腿技与传统搓招；数字技能在正式对战同样可用。",16,Color("9cabb8"))
 
 func run_dlc_checks() -> void:
 	# Frogs must earn a hit-confirm before spending their cancel resource.

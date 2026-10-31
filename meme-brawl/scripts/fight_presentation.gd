@@ -161,7 +161,7 @@ func draw_hud() -> void:
 			label(Vector2(x,102),"%d / %d" % [ceili(f.hp),R.HP[f.kind]],15,Color("ded5e8"),true)
 		var status: String = R.V[f.kind]
 		if f.kind == 0 and f.v_time > 0: status = "迁徙 %.1fs  ·  %d/2 跳" % [f.v_time,f.jumps]
-		if f.kind == 2: status = "棱角再生 %.1fs" % f.horns if f.horns > 0 else "脆角就绪"
+		if f.kind == 2: status = ("再生 %.1fs" % f.horns if f.horns > 0 else "脆角就绪")+" · 陷阱 %d/3" % arena.cat_trap_count(side)
 		if f.kind == 4 and f.charging: status = "喊妈蓄力 %.1f / 2.5s" % f.charge
 		if f.trigger_time > 0: status = R.TRIGGERS[f.kind]+" %.1fs" % f.trigger_time
 		if side == 0: label(Vector2(x,124),status,12,accent)
@@ -183,17 +183,17 @@ func draw_hud() -> void:
 	cut_panel(Rect2(526,12,100,86),Color("392356"),15)
 	middle(76,"∞" if arena.training else "%02d" % ceili(arena.time_left),53,Color("ff927c") if arena.time_left <= 10 else Color.WHITE,not arena.training)
 	middle(115,"FINAL ROUND" if arena.round_wins == [1,1] else "ROUND %d" % arena.round_number,12,GOLD,true)
-	if arena.training: middle(151,"TRAINING / 1–3 必杀 · 4 CA · F4 连段提示 · F5 演练",13,Color("b8acd2"))
+	if arena.training: middle(151,"TRAINING / 数字技能 · F4 玩法提示 · F5 角色演练",13,Color("b8acd2"))
 	else: middle(151,R.STAGES[arena.stage],12,Color("aba2bc"))
 	if arena.training and arena.screen == "fight" and arena.combo_help and arena.intro_time <= 0 and arena.cinematic <= 0:
 		cut_panel(Rect2(336,194,480,82),Color(0.035,0.025,0.075,0.85),12)
-		middle(217,"HIT CONFIRM  →  CHAIN  →  SPECIAL CANCEL  →  SUPER CANCEL",12,GOLD,true)
+		middle(217,R.ROLES[arena.selected],15,GOLD)
 		middle(242,arena.combo_coach.ROUTES[arena.selected],15,Color("dcefff"))
-		middle(264,arena.combo_coach.status if arena.combo_coach.status != "" else "近身轻拳命中后接中拳、重拳；空挥无法取消。F5 查看真实连段。",12,Color("a8a1b9"))
+		middle(264,arena.combo_coach.status if arena.combo_coach.status != "" else R.TACTICS[arena.selected],12,Color("a8a1b9"))
 	if arena.screen == "result":
 		middle(640,"Enter 继续  ·  Esc 返回角色选择",12,Color("a99abc"))
 	else:
-		middle(640,"WASD 移动  ·  JKL 拳  UIO 腿  ·  G 投  V 技能  B 触发  ·  F1 招式  Esc 暂停",12,Color("8e859f"))
+		middle(640,"WASD 移动 · J/K/L 攻击 · 1/2/3 技能 · Shift 强化 · 4 大招 · V 特色 · F1 帮助",12,Color("8e859f"))
 
 func draw_super(side: int, f: Node2D, accent: Color) -> void:
 	var x := 24.0 if side == 0 else 662.0

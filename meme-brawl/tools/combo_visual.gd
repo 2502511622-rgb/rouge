@@ -24,7 +24,7 @@ func run() -> void:
 		arena.selected = kind
 		arena.rival = (kind+1)%6
 		arena.start_match(true,false)
-		arena.combo_coach.start()
+		arena.combo_coach.start(true)
 		for f in arena.fighters: f.visual.set_process(false)
 		await capture("/tmp/meme-combo-visual/ready.png")
 		var special_captured := false

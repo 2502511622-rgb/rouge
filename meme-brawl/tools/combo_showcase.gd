@@ -1,5 +1,5 @@
 extends SceneTree
-## 72 seconds: six real ten-hit routes, then an EX signature for each fighter.
+## 72 seconds: six distinct role lessons, then each fighter’s EX signature.
 const Arena = preload("res://scripts/arena.gd")
 class Director:
 	extends Node

@@ -20,7 +20,7 @@ func run() -> void:
 	arena.smoke = true
 	for kind in range(6):
 		fixture(kind)
-		arena.combo_coach.start()
+		arena.combo_coach.start(true)
 		var peak := 0
 		for i in range(1400):
 			arena._physics_process(1.0/120)
@@ -33,7 +33,7 @@ func run() -> void:
 	# Test with real knockback instead of the training dummy's zero velocity.
 	for kind in range(6):
 		fixture(kind)
-		arena.combo_coach.start()
+		arena.combo_coach.start(true)
 		arena.training = false
 		var peak := 0
 		for i in range(1600):

@@ -13,6 +13,7 @@ var charging := false
 var charge := 0.0
 var charge_bonus := 1.0
 var armor := 0.0
+var shield_guard := 0.0
 var cancel_window := 0.0
 var action_type := "idle"
 var action_rank := -1
@@ -77,7 +78,7 @@ func opponent() -> Node2D:
 func tick(dt: float, controlled: bool) -> void:
 	clock += dt
 	animation += dt
-	for key in ["stun", "cooldown", "active", "v_time", "v_cooldown", "horns", "invulnerable", "flash", "label_time", "trigger_time", "armor", "cancel_window", "low_profile", "guard_time", "counter_startup", "attack_startup", "buffer_time"]:
+	for key in ["stun", "cooldown", "active", "v_time", "v_cooldown", "horns", "invulnerable", "flash", "label_time", "trigger_time", "armor", "cancel_window", "low_profile", "guard_time", "counter_startup", "attack_startup", "buffer_time", "shield_guard"]:
 		set(key, maxf(0.0, float(get(key)) - dt))
 	consume_buffer()
 	if charging and kind == 4:
@@ -160,8 +161,14 @@ func player_input(_dt: float) -> void:
 	if not crouching:
 		velocity.x = x * R.SPEED[kind] * (1.45 if (kind == 0 and v_time > 0) or (kind == 3 and trigger_time > 0) else 1.0)
 
-func press(key: int) -> void:
+func press(key: int, ex_modifier := false) -> void:
 	if hp <= 0 or stun > 0: return
+	if key >= KEY_1 and key <= KEY_3:
+		special(key-KEY_1,ex_modifier or Input.is_physical_key_pressed(KEY_SHIFT))
+		return
+	if key == KEY_4:
+		super_move()
+		return
 	if key == KEY_W and (grounded or (kind == 0 and v_time > 0 and jumps < 2)) and active <= 0:
 		grounded = false
 		jumps += 1
@@ -185,7 +192,7 @@ func press(key: int) -> void:
 	var keys := [KEY_J, KEY_K, KEY_L, KEY_U, KEY_I, KEY_O]
 	var index := keys.find(key)
 	if index < 0: return
-	var kick := index >= 3
+	var kick := index >= 3 or kind == 5
 	var strength := index % 3
 	var ex := Input.is_physical_key_pressed(KEY_SHIFT)
 	if strength == 2:
@@ -274,11 +281,18 @@ func normal(strength: int, kick: bool) -> void:
 			return
 	start_action("normal",strength)
 	var low := crouching and kick and not (kind == 5 and trigger_time > 0)
-	var damage: float = [38, 65, 95][strength] * (0.85 if kind == 2 else (1.25 if kind == 4 else 1.0))
-	begin_attack({"strength": strength, "kick": kick, "damage": damage, "range": [88, 112, 145][strength] + (20 if kick else 0), "low": low, "air": not grounded or (kind == 5 and trigger_time > 0 and kick), "push": 45 + strength * 25, "hitstun": [0.27,0.34,0.42][strength], "cancelable": true, "startup": 0.09 + strength*0.035 if kind == 2 else [0.045,0.065,0.085][strength]}, 0.16 + strength * 0.06, 0.23 + strength * 0.13)
+	var damage: float = [38,65,95][strength] * ([0.85,1.05,0.85,0.8,1.25,0.95][kind])
+	var reach: float = [88,112,145][strength]+(20 if kick else 0)
+	if kind == 3: reach = [88,110,135][strength]
+	if kind == 5 and kick: reach = [160,200,235][strength]
+	begin_attack({"strength": strength, "kick": kick, "damage": damage, "range": reach, "low": low, "air": not grounded or (kind == 5 and trigger_time > 0 and kick), "push": 195 if kind == 5 and kick else 45 + strength * 25, "guard_chip":0.25 if kind == 4 and strength == 2 else 0.08, "hitstun": [0.27,0.34,0.42][strength], "cancelable": true, "startup": 0.09 + strength*0.035 if kind == 2 else [0.045,0.065,0.085][strength]}, 0.16 + strength * 0.06, 0.23 + strength * 0.13)
+	if kind == 3: cooldown *= 0.82
+	if kind == 4:
+		cooldown *= 1.18
+		if strength == 2: armor = 0.12
 	visual.play(("kick_" if kick else "punch_")+str(strength),cooldown)
 	arena.combat_audio.play_clip("kick" if kick else "swing",strength)
-	arena.fx.emit("kick" if kick else ("slash" if kind == 1 else "fist"),position+Vector2(facing*35,-75),kind,0.22,facing,strength == 2)
+	arena.fx.emit("kick" if kick else ("slash" if kind == 1 else "fist"),position+Vector2(facing*(85 if kind == 5 and kick else 35),-75),kind,0.22,facing,strength == 2)
 	meter = minf(3, meter + 0.025)
 
 func begin_attack(data: Dictionary, duration: float, recovery: float) -> void:
@@ -347,6 +361,7 @@ func special(move: int, use_ex: bool) -> void:
 	else:
 		var reach := 155.0 if move == 2 else 115.0
 		begin_attack({"damage": 155 if empowered else 105, "range": reach, "height": 220 if move == 1 else 100, "launch": move == 1, "push": 180, "knockdown": empowered, "ex": empowered}, 0.38, 0.7)
+		if kind == 1 and move == 0: shield_guard = 0.5 if empowered else 0.35
 		if move == 0 or (kind == 0 and move == 1):
 			velocity.x = facing * (650 if empowered else 440)
 		if move == 1 and kind == 1:
@@ -367,7 +382,7 @@ func penguin_special(move: int, empowered: bool) -> void:
 		for n in range(3 if empowered else 1):
 			arena.spawn_projectile(self,n*55,empowered)
 		active = 0.22
-		cooldown = 0.65
+		cooldown = 0.44 if empowered else 0.42
 	elif move == 1:
 		begin_attack({"damage":145 if empowered else 85,"range":125,"height":145,"push":400,"knockdown":empowered},0.45,0.72)
 		low_profile = 0.38 if empowered else 0.22
@@ -392,18 +407,20 @@ func cat_special(move: int, empowered: bool) -> void:
 		active = 0.34
 		cooldown = 0.8
 		if blunt: say("磨平 · 钝角气团" if not empowered else "EX · 钝角碎片")
-	elif move == 1 or empowered:
+	elif move == 1:
 		v_time = 1.55 if empowered else 0.8
 		counter_startup = 0.08 if empowered else 0.18
 		active = counter_startup
 		cooldown = 0.75 if empowered else 0.65
 	else:
+		for i in range(3 if empowered else 1): arena.place_cat_trap(self,i*43,empowered)
+		horns = maxf(horns,2.6)
 		guard_time = 0.5
 		active = 0.3
-		cooldown = 0.6
+		cooldown = 0.7
 		velocity.x = -facing*235
-		# Guarding backstep is deliberately distinct from the V counter.
-		v_time = 0
+		v_time = 0.45 if empowered else 0.0
+		counter_startup = 0.08 if empowered else 0.0
 
 func dlc_special(move: int, empowered: bool) -> void:
 	if kind == 4:
@@ -508,13 +525,17 @@ func throw_move() -> void:
 	start_action("throw")
 	say("投技")
 	visual.play("throw",0.7)
-	begin_attack({"damage": 125, "range": 85, "height": 70, "throw": true, "push": 430, "knockdown": true}, 0.15, 0.7)
+	begin_attack({"damage": 180 if kind == 4 else 125, "range": 95 if kind == 4 else 85, "height": 70, "throw": true, "push": 430, "knockdown": true}, 0.15, 0.7)
 
 func receive(data: Dictionary, source: Node2D) -> void:
 	var linked := stun > 0
 	var hit_note := "COUNTER HIT" if active > 0 else ("PUNISH" if cooldown > 0 else "")
 	if data.get("throw",false): hit_note = "THROW"
 	if hp <= 0 or invulnerable > 0: return
+	if shield_guard > 0 and data.get("projectile",false) and not data.get("low",false):
+		meter = minf(3,meter+0.08)
+		arena.hit_effect(position+Vector2(facing*30,-70),true,0,source.side,false,"SHIELD",data)
+		return
 	if low_profile > 0 and data.get("projectile", false) and not data.get("low",false): return
 	var is_throw: bool = data.get("throw", false)
 	if is_throw and not grounded: return
@@ -546,12 +567,12 @@ func receive(data: Dictionary, source: Node2D) -> void:
 		charge = 0
 	if linked and not guarded:
 		damage *= maxf(0.5 if data.get("ca",false) else 0.35,1.0-int(arena.combo[source.side])*0.085)
-	if guarded: damage *= 0.08
+	if guarded: damage *= float(data.get("guard_chip",0.08))
 	hp = maxf(0, hp - damage)
 	meter = minf(3, meter + (0.24 if kind == 2 else 0.12))
 	if not guarded:
 		v_meter = minf(100, v_meter + 12)
-		source.v_meter = minf(100, source.v_meter + 8)
+		source.v_meter = minf(100,source.v_meter + (0 if source.kind == 3 and data.get("ca",false) else (4 if source.kind == 3 else 8)))
 		if data.get("cancelable", false) and int(data.get("serial",-1)) == source.action_serial:
 			source.cancel_window = 0.3
 			source.confirmed_serial = source.action_serial
@@ -565,7 +586,9 @@ func receive(data: Dictionary, source: Node2D) -> void:
 		return
 	active = 0
 	attack = {}
-	if not guarded: guard_time = 0
+	if not guarded:
+		guard_time = 0
+		shield_guard = 0
 	if kind == 2:
 		v_time = 0
 		counter_startup = 0
@@ -583,36 +606,53 @@ func receive(data: Dictionary, source: Node2D) -> void:
 	if hp <= 0:
 		arena.finish(source.side)
 
+func preferred_special(distance: float) -> int:
+	var airborne: bool = not opponent().grounded
+	match kind:
+		0: return 2 if distance < 150 or (airborne and distance < 210) else 0
+		1: return 1 if airborne else (0 if distance > 145 else 2)
+		2: return 1 if distance < 155 and opponent().active > 0 else (2 if distance < 190 or arena.cat_trap_count(side) == 0 else 0)
+		3: return 2 if airborne and distance < 170 else 1
+		4: return 1 if airborne else (0 if distance > 190 else 2)
+		5: return 1 if airborne and distance < 220 else (2 if distance > 320 else 0)
+	return 0
+
 func ai_input(dt: float) -> void:
-	if kind == 3 and cancel_window > 0 and v_meter >= 35 and randf() < 0.08: v_skill()
-	if stun <= 0 and cancel_window > 0 and randf() < 0.12:
-		if can_cancel("normal",action_rank+1) and action_rank < 2: normal(action_rank+1,false)
-		elif can_cancel("special"): special(1 if kind == 1 else 0,false)
+	var dist := absf(opponent().position.x-position.x)
+	if kind == 3 and action_type == "special" and cancel_window > 0 and v_meter >= 35 and randf() < 0.14:
+		v_skill()
+		normal(0,false)
+	if stun <= 0 and cancel_window > 0 and randf() < (0.3 if kind == 3 else 0.07):
+		if can_cancel("normal",action_rank+1) and action_rank < 2: normal(action_rank+1,kind == 5)
+		elif can_cancel("special"): special(preferred_special(dist),false)
 		elif can_cancel("super") and meter >= 3 and not arena.demo_mode: super_move()
 	if stun > 0 or active > 0: return
 	if kind >= 3 and v_meter >= 100: trigger()
-	if kind == 4 and not charging and charge <= 0 and randf() < 0.01: v_skill()
-	var dist := absf(opponent().position.x - position.x)
-	blocking = opponent().active > 0 and randf() < 0.78
+	if kind == 4 and not charging and charge <= 0 and randf() < 0.03: v_skill()
+	blocking = opponent().active > 0 and dist < 220 and randf() < (0.9 if kind == 1 else 0.55)
 	crouching = blocking and opponent().crouching
-	if dist > 155 and not blocking: velocity.x = facing * R.SPEED[kind] * 0.7
+	if dist > R.SPACING_MAX[kind]: velocity.x = facing*R.SPEED[kind]*0.8
+	elif dist < R.SPACING_MIN[kind]: velocity.x = -facing*R.SPEED[kind]*0.8
+	else: velocity.x = move_toward(velocity.x,0,1400*dt)
 	ai_time -= dt
 	if ai_time > 0: return
-	ai_time = randf_range(0.32, 0.75) / arena.difficulty
-	if blocking:
-		if randf() < 0.4: v_skill()
-	elif meter >= 3 and dist < 400 and not arena.demo_mode:
+	ai_time = randf_range(0.2 if kind == 3 else 0.3,0.4 if kind == 3 else 0.65)/arena.difficulty
+	if blocking and kind in [1,2,5] and v_cooldown <= 0:
+		v_skill()
+	elif meter >= 3 and dist < (160 if kind == 4 else 400) and not arena.demo_mode:
 		super_move()
-	elif dist < 90 and randf() < 0.18:
+	elif kind == 4 and dist < 95 and randf() < 0.3:
 		throw_move()
-	elif randf() < 0.35:
-		special(randi_range(0, 2), meter >= 1 and randf() < 0.4)
-	elif dist < 165:
-		normal(randi_range(0, 2), randf() < 0.5)
-	elif grounded and randf() < 0.3:
-		grounded = false
-		velocity.y = -520
-		velocity.x = facing * 230
+	elif kind == 3 and dist < 110 and randf() < 0.8:
+		normal(1 if dist > 82 else 0,false)
+	elif kind == 5 and dist >= 150 and dist <= 235 and randf() < 0.65:
+		normal(1 if dist < 195 else 2,true)
+	elif kind == 1 and dist < 140 and randf() < 0.55:
+		normal(2 if dist > 110 else 1,false)
+	elif kind == 4 and dist < 145 and randf() < 0.5:
+		normal(2,false)
+	else:
+		special(preferred_special(dist),meter >= 1 and randf() < 0.25)
 
 func _draw() -> void:
 	if visual != null and visual.texture != null:

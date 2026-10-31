@@ -29,7 +29,7 @@ func stop_all() -> void:
 	for player in players: player.stop()
 
 func skill_name(kind: int, move: int) -> String:
-	return [["sonic","swing","kick"],["metal","uppercut","slash"],["shard","counter","swing"],["slime","swing","quake"],["quake","uppercut","quake"],["kick","uppercut","throw"]][kind][move]
+	return [["sonic","swing","kick"],["metal","uppercut","slash"],["shard","counter","shard"],["slime","swing","quake"],["quake","uppercut","quake"],["kick","uppercut","throw"]][kind][move]
 
 func skill(kind: int, move: int, ex: bool) -> void:
 	play_clip(skill_name(kind,move),2 if ex else 1)

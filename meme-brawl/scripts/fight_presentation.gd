@@ -1,6 +1,7 @@
 extends Node2D
 ## Original arcade presentation. Every displayed gauge reads real combat state.
 
+const Frames = preload("res://scripts/sprite_frames.gd")
 const R = preload("res://scripts/roster.gd")
 const CJK = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
 const DISPLAY = preload("res://assets/fonts/ArcadeDisplay.ttf")
@@ -56,20 +57,14 @@ func cut_panel(rect: Rect2, color: Color, notch := 10.0) -> void:
 	draw_colored_polygon(PackedVector2Array([p+Vector2(notch,0),Vector2(e.x,p.y),e-Vector2(notch,0),Vector2(p.x,e.y)]),color)
 
 func actor(kind: int, rect: Rect2, special := false) -> void:
-	var atlas: Texture2D = arena.duo_atlases.get(kind,arena.portrait_atlas)
-	if atlas == null: return
-	var duo: bool = arena.duo_atlases.has(kind)
-	var cell := Vector2(atlas.get_width()/(4.0 if duo else 6.0),atlas.get_height()/4.0)
-	var source := Vector2.ZERO
-	if duo:
-		if special: source = Vector2(2*cell.x,2*cell.y)
-	else: source = Vector2(kind*cell.x,3*cell.y if special else 0)
-	draw_texture_rect_region(atlas,rect,Rect2(source,cell).grow(-10))
+	var duo: bool = kind in [0,2]
+	var sheet := ("gugu_actions.png" if kind == 0 else "cat_actions.png") if duo else "meme_fighters_atlas.png"
+	var index := (10 if special else 0) if duo else kind+(18 if special else 0)
+	var pose: Dictionary = Frames.get_frame(sheet,index)
+	draw_texture_rect(pose.texture,Frames.fit_rect(pose,rect),false)
 	if kind == 2 and not special:
-		for side in [-1,1]:
-			var center := rect.position+Vector2(rect.size.x*0.5,rect.size.y*0.23)
-			var scale_factor := rect.size.x/192
-			draw_colored_polygon(PackedVector2Array([center+Vector2(side*12,0)*scale_factor,center+Vector2(side*44,-33)*scale_factor,center+Vector2(side*40,10)*scale_factor]),GOLD)
+		for chip in Frames.attachments(pose,rect,true):
+			draw_colored_polygon(chip,GOLD)
 
 func _draw() -> void:
 	if arena == null: return

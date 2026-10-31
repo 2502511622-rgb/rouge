@@ -1,6 +1,7 @@
 extends Node2D
 
 const R = preload("res://scripts/roster.gd")
+const Frames = preload("res://scripts/sprite_frames.gd")
 const Presentation = preload("res://scripts/fight_presentation.gd")
 const Fighter = preload("res://scripts/fighter.gd")
 const FONT = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
@@ -57,6 +58,7 @@ var portrait_atlas: Texture2D
 var duo_atlases: Dictionary = {}
 
 func _ready() -> void:
+	Frames.prewarm()
 	if ResourceLoader.exists("res://assets/art/meme_fighters_atlas.png"):
 		portrait_atlas = load("res://assets/art/meme_fighters_atlas.png")
 	for kind in [0,2]:
@@ -577,49 +579,13 @@ func _draw() -> void:
 		draw_line(Vector2(0,y),Vector2(1152,y),Color(0,0,0,0.065))
 
 func draw_portrait(at: Vector2, kind: int) -> void:
-	if duo_atlases.has(kind):
-		var duo: Texture2D = duo_atlases[kind]
-		var size := Vector2(duo.get_width()/4.0,duo.get_height()/4.0)
-		draw_texture_rect_region(duo,Rect2(at-Vector2(70,70),Vector2(140,140)),Rect2(Vector2.ZERO,size).grow(-10))
-		if kind == 2:
-			for side in [-1,1]:
-				draw_colored_polygon(PackedVector2Array([at+Vector2(side*10,-32),at+Vector2(side*33,-61),at+Vector2(side*31,-24)]),Color("ecb439"))
-		return
-	if portrait_atlas != null:
-		var atlas: Texture2D = portrait_atlas
-		var cell := Vector2(atlas.get_width()/6.0,atlas.get_height()/4.0)
-		draw_texture_rect_region(atlas,Rect2(at-Vector2(70,70),Vector2(140,140)),Rect2(Vector2(kind*cell.x,0),cell).grow(-10))
-		return
-	var c: Color = R.COLORS[kind]
-	draw_rect(Rect2(at-Vector2(122,80),Vector2(244,110)),Color(c,0.08))
-	if kind == 0:
-		draw_circle(at,51,Color("1b2633"))
-		draw_circle(at+Vector2(7,10),33,Color("e5e6da"))
-		draw_colored_polygon(PackedVector2Array([at+Vector2(22,-4),at+Vector2(63,8),at+Vector2(22,17)]),Color("e7b338"))
-		draw_rect(Rect2(at+Vector2(13,-24),Vector2(9,10)),Color.BLACK)
-	elif kind == 1:
-		draw_rect(Rect2(at-Vector2(45,43),Vector2(90,85)),c.darkened(0.25))
-		draw_colored_polygon(PackedVector2Array([at+Vector2(-35,-28),at+Vector2(-50,-65),at+Vector2(-12,-49),at+Vector2(29,-49),at+Vector2(67,-10),at+Vector2(17,5)]),c)
-		draw_circle(at+Vector2(-37,23),31,Color("657278"))
-		draw_line(at+Vector2(28,35),at+Vector2(63,-32),Color("dce1d7"),9)
-	elif kind == 2:
-		draw_circle(at,49,c.lightened(0.2))
-		for direction in [-1,1]:
-			draw_colored_polygon(PackedVector2Array([at+Vector2(direction*10,-36),at+Vector2(direction*49,-78),at+Vector2(direction*40,-18)]),Color("e8b035"))
-			draw_line(at+Vector2(direction*9,-8),at+Vector2(direction*30,-10),Color("53495a"),5)
-		draw_line(at+Vector2(-5,12),at+Vector2(6,12),Color("53495a"),3)
-	else:
-		draw_circle(at,58,c)
-		draw_circle(at+Vector2(0,20),35,Color("f2df87"))
-		for direction in [-1,1]:
-			if kind == 3:
-				draw_circle(at+Vector2(direction*30,-43),17,c)
-				draw_line(at+Vector2(direction*30-6,-43),at+Vector2(direction*30+6,-43),Color("574b26"),5)
-			else:
-				draw_colored_polygon(PackedVector2Array([at+Vector2(direction*25,-37),at+Vector2(direction*56,-80),at+Vector2(direction*44,-20)]),Color("b4a27c") if kind == 4 else c)
-				draw_circle(at+Vector2(direction*23,-20),5,Color("574b26"))
-		draw_arc(at+Vector2(0,-17),30,0.1,3.0,7,Color("574b26"),6)
-	text(at+Vector2(-110,62),R.ENGLISH[kind],17,c)
+	var duo := kind in [0,2]
+	var sheet := ("gugu_actions.png" if kind == 0 else "cat_actions.png") if duo else "meme_fighters_atlas.png"
+	var pose: Dictionary = Frames.get_frame(sheet,0 if duo else kind)
+	var rect := Rect2(at-Vector2(70,70),Vector2(140,140))
+	draw_texture_rect(pose.texture,Frames.fit_rect(pose,rect),false)
+	if kind == 2:
+		for chip in Frames.attachments(pose,rect,true): draw_colored_polygon(chip,Color("ecb439"))
 
 func draw_stage() -> void:
 	var skies := [Color("555c61"),Color("627c90"),Color("665149"),Color("75616d")]
@@ -957,6 +923,42 @@ func run_presentation_checks() -> void:
 	assert(selected == 3,"Character portraits select their whole card, not only the label button")
 	print("PRESENTATION PASS: scripted 72-second showcase / scheduled CA / KO / next scene / automatic exit")
 
+func run_frame_checks() -> void:
+	var count := 0
+	for sheet in Frames.data().sheets:
+		var entries: Array = Frames.data().sheets[sheet].frames
+		for index in range(entries.size()):
+			var pose: Dictionary = Frames.get_frame(sheet,index)
+			var image: Image = pose.texture.get_image()
+			var actual := image.get_data()
+			var original: PackedByteArray = Frames.raw_sources[sheet]
+			var runs: Array = entries[index].runs
+			for n in range(0,runs.size(),3):
+				var target := int(runs[n])*4
+				var length := int(runs[n+1])*4
+				var source := int(runs[n+2])*4
+				assert(actual.slice(target,target+length) == original.slice(source,source+length),"Isolated frame must retain its original pixels")
+			var container := Rect2(0,0,180,100)
+			assert(container.grow(0.001).encloses(Frames.fit_rect(pose,container)),"Whole weapon must fit portrait bounds")
+			for polygon in Frames.attachments(pose,container,true):
+				for point in polygon:
+					assert(container.grow(0.001).has_point(point),"Detachable chip horns must fit UI bounds")
+			var ref: Rect2 = pose.reference
+			var core: Array = entries[index].core_box
+			var foot := (float(core[1])+float(core[3])-ref.position.y)/ref.size.y*192-96-88
+			assert(absf(foot) < 0.001,"Foot anchor must remain stable across poses")
+			count += 1
+	assert(count == 56)
+	var upright: Dictionary = Frames.get_frame("cat_actions.png",0)
+	var crouched: Dictionary = Frames.get_frame("cat_actions.png",3)
+	var head_up: Vector2 = Frames.attachments(upright,Rect2(-96,-96,192,192))[0][0]
+	var head_down: Vector2 = Frames.attachments(crouched,Rect2(-96,-96,192,192))[0][0]
+	assert(head_down.y-head_up.y > 20,"Chip horns must follow the lowered crouching head")
+	var thrust: Dictionary = Frames.get_frame("meme_fighters_atlas.png",7)
+	var raised: Dictionary = Frames.get_frame("meme_fighters_atlas.png",19)
+	assert(thrust.box.end.x > 534 and raised.box.position.y < 734,"Cross-cell sword pixels must remain in dog frames")
+	print("FRAME PASS: 56 isolated poses / original pixels / no clipped sword / stable anchors / bounded UI")
+
 func run_smoke() -> void:
 	# Exercise real combat rules, not only parsing or scene existence.
 	for kind in range(R.NAMES.size()):
@@ -1034,6 +1036,7 @@ func run_smoke() -> void:
 	run_dlc_checks()
 	run_duo_checks()
 	run_presentation_checks()
+	run_frame_checks()
 	for character in range(R.NAMES.size()):
 		selected = character
 		start_match(true,false)

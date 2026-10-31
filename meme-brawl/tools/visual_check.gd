@@ -49,6 +49,19 @@ func run() -> void:
 	arena.intro_time = 0
 	arena.fighters[0].v_skill()
 	await capture("gugu_migration.png")
+	arena.selected = 2
+	arena.rival = 1
+	arena.start_match(true,false)
+	arena.intro_time = 0
+	arena.fighters[1].hp = 0
+	arena.finish(0)
+	arena.result_time = 1.2
+	arena.panel.visible = true
+	arena.fighters[0].horns = 0
+	arena.fighters[0].visual.play("win",1.0)
+	arena.fighters[0].visual.clock = 0.9
+	arena.fighters[0].visual.set_process(false)
+	await capture("cat_win_attachment.png")
 	arena.selected = 3
 	arena.rival = 4
 	arena.start_match(false,false)

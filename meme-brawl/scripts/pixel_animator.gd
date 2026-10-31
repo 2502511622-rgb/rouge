@@ -1,7 +1,8 @@
 extends Node2D
-## Four authored atlas poses + per-frame pose, offset, rotation and squash keys.
+## Isolated pose textures + per-frame pose, offset, rotation and squash keys.
 ## These are original assets; this is not a rip of a meme video or another game.
 
+const Frames = preload("res://scripts/sprite_frames.gd")
 const ATLAS_PATH = "res://assets/art/meme_fighters_atlas.png"
 const CLIPS = {
 	"idle": [0,0,0,0,0,0], "walk": [0,1,0,0,1,0,0,0],
@@ -91,7 +92,6 @@ func _draw() -> void:
 	var t := clampf(clock / duration,0,0.999) if locked else fmod(clock / duration,1.0)
 	var frame := mini(keys.size()-1,int(t*keys.size()))
 	var row: int = keys[frame]
-	var cell := Vector2(texture.get_width()/(4.0 if dedicated else 6.0),texture.get_height()/4.0)
 	var offset := Vector2.ZERO
 	var scale_pose := Vector2.ONE
 	var angle := 0.0
@@ -150,13 +150,15 @@ func _draw() -> void:
 			if row in [5,6]: row = 12
 	var face: float = fighter.facing
 	draw_set_transform(Vector2(0,-88)+offset*Vector2(face,1),angle*face,scale_pose*Vector2(face,1))
-	var origin := Vector2((row%4)*cell.x,(row/4)*cell.y) if dedicated else Vector2(fighter.kind*cell.x,row*cell.y)
-	var region := Rect2(origin,cell).grow(-10)
+	var sheet := ("gugu_actions.png" if fighter.kind == 0 else "cat_actions.png") if dedicated else "meme_fighters_atlas.png"
+	var index: int = row if dedicated else row*6+fighter.kind
+	var pose: Dictionary = Frames.get_frame(sheet,index)
+	var isolated: Texture2D = pose.texture
 	var tint := Color.WHITE
 	if fighter.flash > 0: tint = Color(2.2,1.5,1.3)
 	if state.begins_with("ex"):
-		draw_texture_rect_region(texture,Rect2(-104,-102,208,208),region,Color(1,0.75,0.15,0.22))
-	draw_texture_rect_region(texture,Rect2(-96,-96,192,192),region,tint)
+		draw_texture_rect(isolated,Frames.battle_rect(pose,Rect2(-104,-102,208,208)),false,Color(1,0.75,0.15,0.22))
+	draw_texture_rect(isolated,Frames.battle_rect(pose,Rect2(-96,-96,192,192)),false,tint)
 	if dedicated and state == "ca":
 		if fighter.kind == 0:
 			for ring in range(4):
@@ -167,9 +169,7 @@ func _draw() -> void:
 				var at := direction*(95+sin(clock*18)*18)
 				draw_colored_polygon(PackedVector2Array([at+direction*20,at-direction*7+direction.orthogonal()*9,at-direction*7-direction.orthogonal()*9]),Color("f0bc4b"))
 	if dedicated and fighter.kind == 2 and fighter.horns <= 0 and state != "ko":
-		# Detachable chip ears are separate components, so horn loss is visible in every pose.
-		for side in [-1,1]:
-			var chip := PackedVector2Array([Vector2(side*14,-58),Vector2(side*45,-87),Vector2(side*42,-47)])
+		for chip in Frames.attachments(pose,Rect2(-96,-96,192,192)):
 			draw_colored_polygon(chip,Color("ecb439"))
 			draw_polyline(PackedVector2Array([chip[0],chip[1],chip[2],chip[0]]),Color("744c22"),2)
 	draw_set_transform(Vector2.ZERO)

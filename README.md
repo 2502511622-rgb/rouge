@@ -6,6 +6,8 @@
 
 新版界面加入延迟扣血、低血警示、独立 V 槽和三格超必杀槽、真实三局两胜、VS／CA／KO 过场。按 F3 观看六角色演出，Enter／空格跳过，Esc 退出。[界面说明](meme-brawl/docs/UI_GUIDE.md)。
 
+已修复角色串帧与武器裁切，包含刀盾狗完整刀尖、举刀和猫的逐姿势脆角锚点。[逐帧检查图](meme-brawl/docs/SPRITE_FIX.md)。
+
 ![新版战斗界面](meme-brawl/docs/ui/hud.png)
 
 ---

@@ -1,6 +1,7 @@
 extends Node2D
 
 const R = preload("res://scripts/roster.gd")
+const Presentation = preload("res://scripts/fight_presentation.gd")
 const Fighter = preload("res://scripts/fighter.gd")
 const FONT = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
 var fighters: Array = []
@@ -18,6 +19,7 @@ var time_left := 99.0
 var intro_time := 0.0
 var cinematic := 0.0
 var ca_kind := 0
+var ca_side := 0
 var winner := 0
 var banner := ""
 var banner_color := Color.WHITE
@@ -34,6 +36,22 @@ var panel: Control
 var music_phase := 0.0
 var sound_players: Array = []
 var smoke := false
+var round_wins := [0,0]
+var round_number := 1
+var match_complete := false
+var intro_duration := 4.2
+var ca_duration := 1.25
+var result_time := 0.0
+var combo_damage := [0,0]
+var feedback := ["",""]
+var feedback_time := [0.0,0.0]
+var presentation: Node2D
+var demo_mode := false
+var demo_clock := 0.0
+var demo_segment := -1
+var demo_ca_started := false
+var demo_ko_started := false
+var auto_quit_demo := false
 var voice_characters := 0
 var portrait_atlas: Texture2D
 var duo_atlases: Dictionary = {}
@@ -51,7 +69,14 @@ func _ready() -> void:
 				if str(recording).begins_with(character+"_") and ResourceLoader.exists("res://assets/audio/"+recording):
 					voice_characters += 1
 					break
+	var presentation_layer := CanvasLayer.new()
+	presentation_layer.layer = 5
+	add_child(presentation_layer)
+	presentation = Presentation.new()
+	presentation.arena = self
+	presentation_layer.add_child(presentation)
 	ui = CanvasLayer.new()
+	ui.layer = 20
 	add_child(ui)
 	panel = Control.new()
 	ui.add_child(panel)
@@ -63,6 +88,9 @@ func _ready() -> void:
 	if "--smoke-test" in OS.get_cmdline_user_args():
 		smoke = true
 		run_smoke.call_deferred()
+	elif "--demo" in OS.get_cmdline_user_args():
+		auto_quit_demo = "--auto-quit" in OS.get_cmdline_user_args()
+		start_demo.call_deferred()
 
 func clear_ui() -> void:
 	for child in panel.get_children():
@@ -77,15 +105,19 @@ func button(text: String, rect: Rect2, action: Callable, color := Color("303b4c"
 	b.add_theme_font_override("font", FONT)
 	b.add_theme_font_size_override("font_size", 18)
 	var style := StyleBoxFlat.new()
-	style.bg_color = color
-	style.border_color = Color("a4afba")
-	style.set_border_width_all(1)
+	style.bg_color = color.lerp(Color("141224"),0.35)
+	style.border_color = color.lightened(0.4)
+	style.set_border_width_all(2)
 	style.content_margin_left = 12
 	style.content_margin_right = 12
 	b.add_theme_stylebox_override("normal", style)
 	var hover := style.duplicate()
 	hover.bg_color = color.lightened(0.22)
 	b.add_theme_stylebox_override("hover", hover)
+	var focus := style.duplicate()
+	focus.border_color = Color.WHITE
+	focus.set_border_width_all(3)
+	b.add_theme_stylebox_override("focus",focus)
 	b.pressed.connect(action)
 	panel.add_child(b)
 
@@ -99,7 +131,9 @@ func build_menu() -> void:
 	button("开始对战  →",Rect2(105,519,300,48),start_match.bind(false,false),Color("805035"))
 	button("街机 · 食物链巡回",Rect2(425,519,300,48),start_match.bind(false,true),Color("435e59"))
 	button("练习 · 无限时间与能量",Rect2(745,519,300,48),start_match.bind(true,false),Color("5a466b"))
+	button("F3 演出鉴赏 · 72 秒",Rect2(105,579,300,36),start_demo,Color("5a3473"))
 	button("F1 招式与操作",Rect2(425,579,300,36),toggle_help)
+	button("声音 · "+("关闭" if muted else "开启")+" / M",Rect2(745,579,300,36),toggle_mute,Color("345367"))
 
 func choose(i: int) -> void:
 	selected = i
@@ -117,12 +151,26 @@ func cycle_difficulty() -> void:
 	difficulty = 1.45 if difficulty == 1 else 1.0
 	build_menu()
 
+func _unhandled_input(event: InputEvent) -> void:
+	if screen != "select" or show_help: return
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		for kind in range(R.NAMES.size()):
+			var card := Rect2(105+(kind%3)*320,157+(kind/3)*147,300,149)
+			if card.has_point(event.position):
+				choose(kind)
+				get_viewport().set_input_as_handled()
+				return
+
 func toggle_help() -> void:
 	show_help = not show_help
 	panel.visible = not show_help
 	queue_redraw()
 
 func start_match(practice := false, tour := false) -> void:
+	demo_mode = false
+	round_wins = [0,0]
+	round_number = 1
+	match_complete = false
 	training = practice
 	arcade = tour
 	arcade_wins = 0
@@ -139,15 +187,20 @@ func new_round() -> void:
 	effects.clear()
 	combo = [0,0]
 	combo_timer = [0.0,0.0]
+	combo_damage = [0,0]
+	feedback_time = [0.0,0.0]
+	result_time = 0
+	match_complete = false
+	presentation.reset()
 	for side in range(2):
 		var f = Fighter.new()
 		f.configure(self,selected if side == 0 else rival,side)
 		add_child(f)
 		fighters.append(f)
-		f.visual.play("intro",3.6)
+		f.visual.play("intro",intro_duration)
 		if training: f.meter = 3
 	time_left = 99
-	intro_time = 3.6
+	intro_time = intro_duration
 	screen = "fight"
 	paused = false
 	show_help = false
@@ -158,11 +211,33 @@ func new_round() -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo: return
 	var key: int = event.physical_keycode
+	if key == KEY_F3:
+		if demo_mode: stop_demo()
+		else: start_demo()
+		return
+	if demo_mode and key == KEY_ESCAPE:
+		stop_demo()
+		return
+	if key in [KEY_ENTER,KEY_SPACE] and screen != "select":
+		if intro_time > 0:
+			intro_time = 0
+			for f in fighters: f.visual.play("idle",0.5)
+		elif cinematic > 0:
+			cinematic = 0
+			if fighters.size() == 2:
+				var visual = fighters[ca_side].visual
+				visual.clock = maxf(visual.clock,visual.duration-1.25)
+		elif demo_mode:
+			demo_clock = (demo_segment+1)*12.0
+		elif screen == "result":
+			if result_time < 1: result_time = 1
+			else: primary_result()
+		return
 	if key == KEY_F1:
 		toggle_help()
 		return
 	if key == KEY_M:
-		muted = not muted
+		toggle_mute()
 		return
 	if key == KEY_ESCAPE:
 		if show_help:
@@ -173,6 +248,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				button("继续对战",Rect2(426,285,300,50),resume)
 				button("返回角色选择",Rect2(426,350,300,50),back_to_menu)
 			else: clear_ui()
+		elif screen == "result":
+			back_to_menu()
 		return
 	if screen == "select":
 		if key == KEY_ENTER: start_match()
@@ -191,12 +268,18 @@ func resume() -> void:
 	clear_ui()
 
 func back_to_menu() -> void:
+	demo_mode = false
+	panel.visible = true
 	screen = "select"
 	paused = false
 	build_menu()
 
 func _physics_process(dt: float) -> void:
 	elapsed += dt
+	if demo_mode and not paused and not show_help: update_demo(dt)
+	if screen == "result" and not paused and not show_help:
+		result_time += dt
+		panel.visible = result_time >= 1 and not demo_mode
 	for f in fighters:
 		f.visible = screen in ["fight","result"] and not show_help and not paused and cinematic <= 0
 	banner_time = maxf(0,banner_time-dt)
@@ -208,7 +291,7 @@ func _physics_process(dt: float) -> void:
 			cinematic -= dt
 		else:
 			if not training: time_left = maxf(0,time_left-dt)
-			fighters[0].tick(dt,true)
+			fighters[0].tick(dt,not demo_mode)
 			if screen == "fight": fighters[1].tick(dt,false)
 			# Practice dummy stays neutral while receiving attacks.
 			if training:
@@ -219,6 +302,7 @@ func _physics_process(dt: float) -> void:
 				tick_projectiles(dt)
 				if time_left <= 0: finish(0 if fighters[0].hp/R.HP[selected] >= fighters[1].hp/R.HP[rival] else 1)
 	for i in range(2):
+		feedback_time[i] = maxf(0,float(feedback_time[i])-dt)
 		combo_timer[i] = maxf(0,float(combo_timer[i])-dt)
 		if combo_timer[i] <= 0: combo[i] = 0
 	for e in effects: e.life -= dt
@@ -279,13 +363,19 @@ func tick_projectiles(dt: float) -> void:
 			else: p.life = 0
 	projectiles = projectiles.filter(func(p): return p.life > 0 and p.position.x > -70 and p.position.x < 1220)
 
-func hit_effect(at: Vector2, guarded: bool, damage: float) -> void:
+func hit_effect(at: Vector2, guarded: bool, damage: float, attacker := -1, linked := false, note := "") -> void:
 	effects.append({"at":at,"life":0.32,"guard":guarded,"damage":roundi(damage)})
 	shake = 0.08 if guarded else 0.16
+	if attacker < 0: return
 	if not guarded:
-		var attacker := 0 if at.x > fighters[0].position.x else 1
+		if not linked:
+			combo[attacker] = 0
+			combo_damage[attacker] = 0
 		combo[attacker] += 1
+		combo_damage[attacker] += roundi(damage)
 		combo_timer[attacker] = 1.25
+	feedback[attacker] = "BLOCK" if guarded else note
+	feedback_time[attacker] = 1.1 if not note.is_empty() or guarded else 0
 
 func announce(text: String, color: Color) -> void:
 	banner = text
@@ -295,23 +385,115 @@ func announce(text: String, color: Color) -> void:
 func finish(side: int) -> void:
 	if screen != "fight": return
 	winner = side
+	round_wins[side] += 1
+	match_complete = training or round_wins[side] >= 2
+	result_time = 0
 	screen = "result"
+	panel.visible = false
 	for team in range(2):
 		fighters[team].position = Vector2(145 if team == 0 else 1007,510)
 		fighters[team].visual.play("win" if team == side else "ko",1.8)
 	announce("K.O.",Color("f0c883"))
-	button("再来一局",Rect2(265,530,290,52),new_round,Color("805035"))
-	if arcade and side == 0 and arcade_wins < R.NAMES.size()-2:
-		button("下一场 · 食物链继续",Rect2(580,530,310,52),next_arcade,Color("435e59"))
-	else:
-		button("返回角色选择",Rect2(580,530,310,52),back_to_menu)
+	button("再战" if match_complete else "下一回合",Rect2(265,530,290,52),primary_result,Color("805035"))
+	button("返回角色选择",Rect2(580,530,310,52),back_to_menu)
+	if arcade and side == 0 and match_complete and arcade_wins < R.NAMES.size()-2:
+		panel.get_child(0).text = "下一场 · 食物链继续"
 	sound(fighters[side].kind,"win")
+
+func primary_result() -> void:
+	if not match_complete:
+		var resource := [fighters[0].meter,fighters[1].meter]
+		round_number += 1
+		new_round()
+		for side in range(2): fighters[side].meter = resource[side]
+	elif arcade and winner == 0 and arcade_wins < R.NAMES.size()-2:
+		next_arcade()
+	else:
+		restart_match()
+
+func restart_match() -> void:
+	round_wins = [0,0]
+	round_number = 1
+	new_round()
 
 func next_arcade() -> void:
 	arcade_wins += 1
 	rival = (selected + arcade_wins + 1) % R.NAMES.size()
 	stage = (stage + 1) % 4
+	round_wins = [0,0]
+	round_number = 1
 	new_round()
+
+func toggle_mute() -> void:
+	muted = not muted
+	if muted:
+		for player in sound_players: player.stop()
+	if screen == "select": build_menu()
+
+func begin_ca(kind: int, side := 0) -> void:
+	ca_kind = kind
+	ca_side = side
+	ca_duration = 2.2 if demo_mode else 1.25
+	cinematic = ca_duration
+
+func start_demo() -> void:
+	demo_mode = true
+	demo_clock = 0
+	demo_segment = -1
+	training = false
+	arcade = false
+	show_help = false
+	paused = false
+	update_demo(0)
+
+func stop_demo() -> void:
+	demo_mode = false
+	if auto_quit_demo:
+		get_tree().quit(0)
+	else:
+		back_to_menu()
+
+func update_demo(dt: float) -> void:
+	demo_clock += dt
+	if demo_clock >= 72:
+		stop_demo()
+		return
+	var segment := int(demo_clock/12)
+	if segment != demo_segment:
+		demo_segment = segment
+		selected = segment
+		rival = [2,0,0,4,5,3][segment]
+		stage = segment%4
+		round_wins = [0,0]
+		round_number = 1
+		new_round()
+		for f in fighters: f.meter = 3
+		demo_ca_started = false
+		demo_ko_started = false
+	var phase := fmod(demo_clock,12)
+	if phase >= 6 and not demo_ca_started:
+		demo_ca_started = true
+		intro_time = 0
+		var a = fighters[0]
+		var b = fighters[1]
+		a.position = Vector2(480,532)
+		b.position = Vector2(635,532)
+		a.facing = 1
+		b.facing = -1
+		a.stun = 0
+		a.active = 0
+		a.cooldown = 0
+		a.meter = 3
+		b.v_time = 0
+		b.counter_startup = 0
+		b.invulnerable = 0
+		a.super_move()
+	if phase >= 10 and not demo_ko_started:
+		demo_ko_started = true
+		if screen == "fight":
+			fighters[1].hp = 0
+			finish(0)
+		panel.visible = false
 
 func sound(kind: int, action: String) -> void:
 	if muted or smoke: return
@@ -361,18 +543,7 @@ func _draw() -> void:
 		for f in fighters:
 			if f.kind == 3 and f.trigger_time > 0:
 				draw_rect(Rect2(0,122,1152,418),Color(0.65,0.025,0.015,0.18))
-	if screen == "select":
-		draw_rect(Rect2(0,0,1152,648),Color(0.02,0.03,0.06,0.65))
-		text(Vector2(106,56),"PIXEL EDITION  /  27 STATE ANIMATIONS  /  已导入录音 %d/6" % voice_characters,15,Color("91aaa7"))
-		text(Vector2(100,120),"模因乱斗：抽象食物链",48,Color("f2d7a0"))
-		text(Vector2(104,157),"MEME BRAWL     ·     荒野里，没有永远的猎手",20,Color("b9bbc0"))
-		for i in range(R.NAMES.size()):
-			draw_set_transform(Vector2(255+(i%3)*320,206+(i/3)*147),0,Vector2(0.63,0.63))
-			draw_portrait(Vector2.ZERO,i)
-			draw_set_transform(Vector2.ZERO)
-		text(Vector2(105,633),"咕咕嘎嘎 → 刀盾狗 → 妙脆角猫 → 咕咕嘎嘎     /     克制伤害 +8%      ·      M 静音",16,Color("aeb8c0"))
-	else:
-		draw_hud()
+	if screen != "select":
 		for p in projectiles:
 			if p.delay > 0: continue
 			var pos: Vector2 = p.position
@@ -397,31 +568,6 @@ func _draw() -> void:
 				var ray := Vector2.from_angle(j*TAU/8)
 				draw_line(pos+ray*12,pos+ray*(30+(0.32-e.life)*90),color,4)
 			text(pos+Vector2(-15,-50),"防御" if e.guard else str(e.damage),23,color)
-		if intro_time > 0:
-			draw_rect(Rect2(0,218,1152,145),Color(0.03,0.04,0.07,0.85))
-			if intro_time > 0.8:
-				center(260,R.NAMES[selected]+"："+R.intro(selected,rival),25,R.COLORS[selected])
-				center(310,R.NAMES[rival]+"："+R.intro(rival,selected),25,R.COLORS[rival])
-			else: center(310,"食物链 · 开战！",48,Color("f2d7a0"))
-		elif cinematic > 0:
-			draw_rect(Rect2(0,180,1152,210),Color(0.05,0.02,0.1,0.88))
-			var cutin_path := "res://assets/art/meme_fighters_atlas.png"
-			if ResourceLoader.exists(cutin_path):
-				var atlas: Texture2D = duo_atlases.get(ca_kind,portrait_atlas)
-				var columns := 4.0 if duo_atlases.has(ca_kind) else 6.0
-				var cell := Vector2(atlas.get_width()/columns,atlas.get_height()/4.0)
-				var origin := Vector2(2*cell.x,2*cell.y) if duo_atlases.has(ca_kind) else Vector2(ca_kind*cell.x,3*cell.y)
-				draw_texture_rect_region(atlas,Rect2(28,158,250,250),Rect2(origin,cell).grow(-10))
-			if ca_kind == 4:
-				draw_circle(Vector2(576,210),94,Color(1.0,0.85,0.25,0.22))
-				draw_colored_polygon(PackedVector2Array([Vector2(370,450),Vector2(480,230),Vector2(670,230),Vector2(780,450)]),Color(1.0,0.85,0.25,0.14))
-			center(260,"CRITICAL ART",22,R.COLORS[ca_kind])
-			center(335,R.CA[ca_kind],64,Color("fff0ce"))
-			if ca_kind >= 3:
-				center(375,["生母弃我，胞兄厌我……", "妈 —— 妈 ——！", "胆子真是肥嘟嘟的！抢生意抢到我头上来了！"][ca_kind-3],21,Color("f5c889"))
-		elif banner_time > 0 and screen == "fight":
-			center(193,banner,24,banner_color)
-		if screen == "result": draw_result()
 	if paused:
 		draw_rect(Rect2(0,0,1152,648),Color(0,0,0,0.65))
 		center(225,"食物链暂停",42,Color("f2d7a0"))
@@ -503,46 +649,6 @@ func draw_stage() -> void:
 		draw_line(Vector2(x+10,335),Vector2(x+52,294+i*9),Color("353a35"),7)
 	draw_rect(Rect2(0,540,1152,108),Color(0.02,0.025,0.035,0.36))
 
-func draw_hud() -> void:
-	draw_rect(Rect2(0,0,1152,122),Color("111923"))
-	for side in range(2):
-		var f = fighters[side]
-		var x := 40.0 if side == 0 else 657.0
-		text(Vector2(x,34),("P1  " if side == 0 else ("DUMMY  " if training else "CPU  "))+R.NAMES[f.kind],22,R.COLORS[f.kind])
-		draw_rect(Rect2(x,46,455,25),Color("3e252d"))
-		var ratio: float = f.hp/R.HP[f.kind]
-		draw_rect(Rect2(x if side == 0 else x+455*(1-ratio),46,455*ratio,25),R.COLORS[f.kind])
-		text(Vector2(x,96),"%d / %d" % [ceili(f.hp),R.HP[f.kind]],14,Color("bfc7c9"))
-		text(Vector2(x+165,96),("V %d  B %s" % [int(f.v_meter),"就绪" if f.v_meter >= 100 else "蓄能"]) if f.kind >= 3 else ("V  就绪" if f.v_cooldown <= 0 else "V  %.1fs" % f.v_cooldown),14,Color("a3b6bb"))
-		if f.kind == 0 and f.v_time > 0:
-			text(Vector2(x+300,96),"迁徙 %.1fs · %d/2跳" % [f.v_time,f.jumps],12,R.COLORS[0])
-		if f.kind == 2:
-			text(Vector2(x+300,96),"棱角再生 %.1fs" % f.horns if f.horns > 0 else "脆角就绪",12,R.COLORS[2])
-		for m in range(3):
-			draw_rect(Rect2(x+m*155,587,145,17),Color("26323e"))
-			draw_rect(Rect2(x+m*155,587,145*clampf(f.meter-m,0,1),17),Color("e5b85d") if f.meter >= 3 else R.COLORS[f.kind])
-		text(Vector2(x,577),"CRITICAL ART READY" if f.meter >= 3 else "EX  /  %.2f" % f.meter,16,Color("edd49e"))
-		if f.trigger_time > 0:
-			text(Vector2(x,137),R.TRIGGERS[f.kind]+" · %.1fs" % f.trigger_time,17,Color("ffac71"))
-		if combo[side] > 1:
-			text(Vector2(x,245),"%d HITS" % combo[side],32,Color("ffe0a2"))
-	center(68,"∞" if training else "%02d" % ceili(time_left),38,Color("ead4b1"))
-	center(112,R.STAGES[stage],14,Color("a4a8a9"))
-	center(635,"WASD 移动 / 蹲防   J K L 拳   U I O 腿   G 投   V 技能   B 触发   T 挑衅   F1 招式   Esc 暂停",15,Color("c2c6cb"))
-	if training: center(150,"练习模式 · P1 无限能量 · R 重置 · 对手静止",17,Color("d0b8e8"))
-
-func draw_result() -> void:
-	draw_rect(Rect2(0,140,1152,450),Color(0.025,0.035,0.055,0.93))
-	var win_kind: int = fighters[winner].kind
-	var lose_kind: int = fighters[1-winner].kind
-	center(213,"K.O.  /  " + R.NAMES[win_kind] + " 胜利",42,R.COLORS[win_kind])
-	center(275,R.WIN[win_kind],27,Color("f0d8a6"))
-	center(319,R.NAMES[lose_kind]+"："+R.LOSE[lose_kind],20,Color("aeb9c1"))
-	center(391,R.ending(win_kind,lose_kind),21,Color("d6d1c7"))
-	if arcade and winner == 0 and arcade_wins >= R.NAMES.size()-2:
-		center(449,"食物链巡回完成 · 六强尽败，荒野重启",20,Color("e4be79"))
-	else: center(449,"食物链永恒循环。下一次，谁是猎物？",20,Color("929f9e"))
-
 func draw_help() -> void:
 	draw_rect(Rect2(35,22,1082,605),Color("111b29"))
 	text(Vector2(67,65),"荒野格斗手册 · " + R.NAMES[selected] + " / F1 或 Esc 关闭",28,Color("efcf95"))
@@ -557,7 +663,7 @@ func draw_help() -> void:
 	text(Vector2(67,478),"方向相对朝向 · 0.85 秒缓冲 · Shift+必杀 = EX（1 格）· CA 消耗 3 格",18)
 	text(Vector2(67,520),"原三角克制保留 +8%；新角色无额外属性克制。投技可破当身与霸体。",18)
 	text(Vector2(67,564),"奶蛙：触发时防御降低 / 牛来：蓄力受击清空 / 袋鼠：触发踢技为中段",18)
-	text(Vector2(67,602),"原创像素图集与状态动画；当前无原版录音，使用合成提示音。",16,Color("9cabb8"))
+	text(Vector2(67,602),"Enter/Space 跳过特写 · F3 演出鉴赏 · 先胜两个回合获胜",16,Color("9cabb8"))
 
 func run_dlc_checks() -> void:
 	# Frogs must earn a hit-confirm before spending their cancel resource.
@@ -763,6 +869,94 @@ func run_duo_checks() -> void:
 	assert(b.hp < before and b.stun >= 0.4 and projectiles.is_empty(),"Stepping on shards trips once and consumes trap")
 	print("DUO PASS: cat horn loss / blunt shot / regeneration / guarded retreat / counter startup / EX ground traps / jump avoidance")
 
+func run_presentation_checks() -> void:
+	selected = 0
+	rival = 2
+	start_match(false,false)
+	var a = fighters[0]
+	var b = fighters[1]
+	a.hp = R.HP[0]*0.5
+	presentation.update_gauges(0.1)
+	assert(presentation.life_trail[0] == 1,"Damage leaves a delayed health trail")
+	presentation.update_gauges(0.35)
+	assert(presentation.life_trail[0] < 1 and presentation.life_trail[0] >= 0.5)
+	presentation.update_gauges(2)
+	assert(is_equal_approx(presentation.life_trail[0],0.5),"Health trail settles on actual HP")
+	a.hp = R.HP[0]
+	presentation.update_gauges(0.1)
+	assert(presentation.life_trail[0] == 1,"Healing immediately synchronizes trail")
+	a.meter = 0.99
+	assert(presentation.meter_count(a) == 0)
+	a.meter = 1.01
+	assert(presentation.meter_count(a) == 1)
+	a.meter = 3
+	assert(presentation.meter_count(a) == 3)
+	a.v_cooldown = 3.5
+	assert(is_equal_approx(presentation.v_ratio(a),0.5),"Old roster V gauge reflects cooldown")
+	var enter := InputEventKey.new()
+	enter.pressed = true
+	enter.physical_keycode = KEY_ENTER
+	_unhandled_key_input(enter)
+	assert(intro_time == 0,"Intro can be skipped")
+	assert(a.visual.state == "idle","Skipping intro releases its visual animation lock")
+	a.super_move()
+	_unhandled_key_input(enter)
+	assert(cinematic == 0 and a.meter == 0 and a.active > 0,"Skipping CA cannot refund meter or cancel attack")
+	a.meter = 1.6
+	b.meter = 0.4
+	finish(0)
+	assert(round_wins == [1,0] and not match_complete,"First win is a round, not the match")
+	primary_result()
+	assert(round_number == 2 and round_wins == [1,0] and fighters[0].meter == 1.6)
+	assert(fighters[0].hp == R.HP[selected],"Next round restores health and preserves super meter")
+	finish(1)
+	primary_result()
+	assert(round_number == 3 and round_wins == [1,1])
+	finish(0)
+	assert(match_complete and round_wins == [2,1],"First to two completes match")
+	var escape := InputEventKey.new()
+	escape.pressed = true
+	escape.physical_keycode = KEY_ESCAPE
+	_unhandled_key_input(escape)
+	assert(screen == "select","Results can return to selection with Escape")
+	restart_match()
+	assert(round_number == 1 and round_wins == [0,0])
+	print("HUD PASS: delayed HP / gauge thresholds / V cooldown / skip safety / real best-of-three")
+	selected = 3
+	start_match(true,false)
+	a = fighters[0]
+	b = fighters[1]
+	a.v_meter = 50
+	assert(is_equal_approx(presentation.v_ratio(a),0.5),"New roster V gauge reflects actual resource")
+	b.stun = 0
+	b.receive({"damage":40},a)
+	b.receive({"damage":40},a)
+	assert(combo[0] == 2 and combo_damage[0] == 80,"True linked hits accumulate damage for the real attacker")
+	b.stun = 0
+	b.receive({"damage":40},a)
+	assert(combo[0] == 1 and combo_damage[0] == 40,"A recovered opponent starts a new combo")
+	print("HUD PASS: independent V resource / correct-side combo / damage tally / combo break")
+	start_demo()
+	_unhandled_key_input(escape)
+	assert(not demo_mode and screen == "select","Showcase can be exited without watching the full sequence")
+	start_demo()
+	assert(demo_mode and demo_segment == 0 and selected == 0)
+	update_demo(6.01)
+	assert(demo_ca_started and ca_kind == 0 and cinematic > 0)
+	update_demo(4.01)
+	assert(demo_ko_started and screen == "result")
+	update_demo(2.0)
+	assert(demo_segment == 1 and selected == 1)
+	update_demo(60)
+	assert(not demo_mode and screen == "select","Showcase ends cleanly after six scenes")
+	var click := InputEventMouseButton.new()
+	click.pressed = true
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.position = Vector2(255,350)
+	_unhandled_input(click)
+	assert(selected == 3,"Character portraits select their whole card, not only the label button")
+	print("PRESENTATION PASS: scripted 72-second showcase / scheduled CA / KO / next scene / automatic exit")
+
 func run_smoke() -> void:
 	# Exercise real combat rules, not only parsing or scene existence.
 	for kind in range(R.NAMES.size()):
@@ -839,6 +1033,7 @@ func run_smoke() -> void:
 		print("SIMULATION PASS: ",R.NAMES[kind]," vs ",R.NAMES[rival])
 	run_dlc_checks()
 	run_duo_checks()
+	run_presentation_checks()
 	for character in range(R.NAMES.size()):
 		selected = character
 		start_match(true,false)
@@ -863,6 +1058,6 @@ func run_smoke() -> void:
 			assert(visual.state == clip and visual.clock > 0,"Animation playback must advance")
 		print("ANIMATION PASS: ",R.NAMES[character]," / ",visual.CLIPS.size()," clips")
 	back_to_menu()
-	assert(panel.get_child_count() == 13,"Selection menu buttons")
+	assert(panel.get_child_count() == 15,"Selection menu buttons")
 	print("MEME BRAWL SMOKE PASS")
 	get_tree().quit(0)

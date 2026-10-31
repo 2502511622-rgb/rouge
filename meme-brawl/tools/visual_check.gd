@@ -49,5 +49,36 @@ func run() -> void:
 	arena.intro_time = 0
 	arena.fighters[0].v_skill()
 	await capture("gugu_migration.png")
+	arena.selected = 3
+	arena.rival = 4
+	arena.start_match(false,false)
+	arena.intro_time = 0
+	arena.round_wins = [1,1]
+	arena.round_number = 3
+	arena.fighters[0].hp = 237
+	arena.fighters[0].meter = 1.65
+	arena.fighters[0].v_meter = 45
+	arena.fighters[1].hp = 810
+	arena.fighters[1].meter = 3
+	arena.fighters[1].v_meter = 80
+	arena.presentation.reset()
+	await capture("hud_damage.png")
+	arena.intro_time = 2.5
+	await capture("versus.png")
+	arena.intro_time = 0
+	arena.begin_ca(4)
+	arena.cinematic = arena.ca_duration*0.65
+	await capture("critical_art.png")
+	arena.cinematic = 0
+	arena.fighters[1].hp = 0
+	arena.finish(0)
+	arena.result_time = 0.3
+	await capture("ko.png")
+	arena.result_time = 1.2
+	arena.panel.visible = true
+	await capture("winner.png")
+	arena.back_to_menu()
+	await capture("selection.png")
+	print("UI VISUAL CHECK PASS: health / super / V / final round / VS / CA / KO / winner / selection")
 	print("VISUAL CHECK PASS: horn-ready / horn-loss / regrowth / ground-shard / migration")
 	quit(0)

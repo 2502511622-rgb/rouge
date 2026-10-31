@@ -392,8 +392,7 @@ func super_move() -> void:
 	motion.clear()
 	say(R.CA[kind])
 	invulnerable = 0.9
-	arena.cinematic = 0.65
-	arena.ca_kind = kind
+	arena.begin_ca(kind,side)
 	begin_attack({"damage": 55, "range": 1200 if kind != 1 else 450, "height": 600, "push": 25, "knockdown": false, "ca": true}, 0.85, 1.25)
 	remaining_hits = 5
 	hit_interval = 0.12
@@ -405,7 +404,7 @@ func super_move() -> void:
 	if kind == 5:
 		grounded = false
 		velocity.y = -300
-	visual.play("ca",1.9)
+	visual.play("ca",arena.ca_duration+1.25)
 	arena.sound(kind, "ca")
 
 func throw_move() -> void:
@@ -415,6 +414,9 @@ func throw_move() -> void:
 	begin_attack({"damage": 125, "range": 85, "height": 70, "throw": true, "push": 430, "knockdown": true}, 0.15, 0.7)
 
 func receive(data: Dictionary, source: Node2D) -> void:
+	var linked := stun > 0
+	var hit_note := "COUNTER HIT" if active > 0 else ("PUNISH" if cooldown > 0 else "")
+	if data.get("throw",false): hit_note = "THROW"
 	if hp <= 0 or invulnerable > 0: return
 	if low_profile > 0 and data.get("projectile", false) and not data.get("low",false): return
 	var is_throw: bool = data.get("throw", false)
@@ -452,7 +454,7 @@ func receive(data: Dictionary, source: Node2D) -> void:
 	if armor > 0 and not is_throw:
 		stun = 0
 		flash = 0.12
-		arena.hit_effect(position + Vector2(0,-70), false, damage)
+		arena.hit_effect(position + Vector2(0,-70), false, damage,source.side,linked,hit_note)
 		if hp <= 0: arena.finish(source.side)
 		return
 	active = 0
@@ -467,7 +469,7 @@ func receive(data: Dictionary, source: Node2D) -> void:
 		velocity.y = -260
 		grounded = false
 	flash = 0.12
-	arena.hit_effect(position + Vector2(0, -70), guarded, damage)
+	arena.hit_effect(position + Vector2(0, -70), guarded, damage,source.side,linked,hit_note)
 	visual.play("ko" if hp <= 0 else ("block" if guarded else "hit"),0.8 if hp <= 0 else 0.28)
 	arena.sound(kind, "block" if guarded else "hit")
 	if hp <= 0:
@@ -487,7 +489,7 @@ func ai_input(dt: float) -> void:
 	ai_time = randf_range(0.32, 0.75) / arena.difficulty
 	if blocking:
 		if randf() < 0.4: v_skill()
-	elif meter >= 3 and dist < 400:
+	elif meter >= 3 and dist < 400 and not arena.demo_mode:
 		super_move()
 	elif dist < 90 and randf() < 0.18:
 		throw_move()

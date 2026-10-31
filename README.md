@@ -1,8 +1,12 @@
 # 模因乱斗：抽象食物链
 
-[下载完整 Godot 工程包](Meme-Brawl-Godot.zip) · [打开独立 Godot 工程](meme-brawl/project.godot) · [运行、键位与完成范围](meme-brawl/README.md)
+[72 秒界面与过场演示](Meme-Brawl-Showcase.mp4) · [下载完整 Godot 工程包](Meme-Brawl-Godot.zip) · [打开独立 Godot 工程](meme-brawl/project.godot) · [运行、键位与完成范围](meme-brawl/README.md)
 
 六角色横版格斗原型：咕咕嘎嘎、刀盾狗、妙脆角猫、奶蛙、牛来、美团袋鼠；含 AI 对战、街机巡回、练习、搓招、EX、CA、V 技能、黄色三幻神 V 触发与四个舞台。Godot 4.3+ 打开工程按 F5，F1 查看招式。已导入原创像素图集与六角色各 27 种状态动画；企鹅与猫各有 16 姿势独立图集，完善了迁徙空战、脆角再生与落地陷阱。原版梗录音因抖音访问受阻尚未导入，当前仍为合成音效；动画使用关键姿势和变换，不是商业级逐帧手绘演出。
+
+新版界面加入延迟扣血、低血警示、独立 V 槽和三格超必杀槽、真实三局两胜、VS／CA／KO 过场。按 F3 观看六角色演出，Enter／空格跳过，Esc 退出。[界面说明](meme-brawl/docs/UI_GUIDE.md)。
+
+![新版战斗界面](meme-brawl/docs/ui/hud.png)
 
 ---
 

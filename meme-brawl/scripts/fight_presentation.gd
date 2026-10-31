@@ -1,0 +1,282 @@
+extends Node2D
+## Original arcade presentation. Every displayed gauge reads real combat state.
+
+const R = preload("res://scripts/roster.gd")
+const CJK = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
+const DISPLAY = preload("res://assets/fonts/ArcadeDisplay.ttf")
+const INK = Color("10101e")
+const CYAN = Color("54edee")
+const PINK = Color("fb46ba")
+const GOLD = Color("ffde83")
+var arena: Node2D
+var life_trail := [1.0,1.0]
+var last_life := [1.0,1.0]
+var trail_delay := [0.0,0.0]
+var clock := 0.0
+
+func reset() -> void:
+	life_trail = [1.0,1.0]
+	last_life = [1.0,1.0]
+	trail_delay = [0.0,0.0]
+
+func update_gauges(dt: float) -> void:
+	if arena.fighters.size() != 2: return
+	for side in range(2):
+		var f = arena.fighters[side]
+		var ratio: float = clampf(f.hp/R.HP[f.kind],0,1)
+		if ratio < last_life[side]: trail_delay[side] = 0.35
+		elif ratio > last_life[side]: life_trail[side] = ratio
+		last_life[side] = ratio
+		trail_delay[side] = maxf(0,trail_delay[side]-dt)
+		if trail_delay[side] <= 0:
+			life_trail[side] = move_toward(life_trail[side],ratio,dt*0.65)
+
+func _process(dt: float) -> void:
+	if arena == null: return
+	clock += dt
+	if not arena.paused and not arena.show_help: update_gauges(dt)
+	queue_redraw()
+
+func label(at: Vector2, value: String, size := 18, color := Color.WHITE, display := false) -> void:
+	draw_string(DISPLAY if display else CJK,at,value,HORIZONTAL_ALIGNMENT_LEFT,-1,size,color)
+
+func middle(y: float, value: String, size := 24, color := Color.WHITE, display := false) -> void:
+	var font = DISPLAY if display else CJK
+	var width: float = font.get_string_size(value,HORIZONTAL_ALIGNMENT_LEFT,-1,size).x
+	label(Vector2((1152-width)/2,y),value,size,color,display)
+
+func right(at: Vector2, value: String, size := 18, color := Color.WHITE, display := false) -> void:
+	var font = DISPLAY if display else CJK
+	var width: float = font.get_string_size(value,HORIZONTAL_ALIGNMENT_LEFT,-1,size).x
+	label(at-Vector2(width,0),value,size,color,display)
+
+func cut_panel(rect: Rect2, color: Color, notch := 10.0) -> void:
+	var p := rect.position
+	var e := rect.end
+	draw_colored_polygon(PackedVector2Array([p+Vector2(notch,0),Vector2(e.x,p.y),e-Vector2(notch,0),Vector2(p.x,e.y)]),color)
+
+func actor(kind: int, rect: Rect2, special := false) -> void:
+	var atlas: Texture2D = arena.duo_atlases.get(kind,arena.portrait_atlas)
+	if atlas == null: return
+	var duo: bool = arena.duo_atlases.has(kind)
+	var cell := Vector2(atlas.get_width()/(4.0 if duo else 6.0),atlas.get_height()/4.0)
+	var source := Vector2.ZERO
+	if duo:
+		if special: source = Vector2(2*cell.x,2*cell.y)
+	else: source = Vector2(kind*cell.x,3*cell.y if special else 0)
+	draw_texture_rect_region(atlas,rect,Rect2(source,cell).grow(-10))
+	if kind == 2 and not special:
+		for side in [-1,1]:
+			var center := rect.position+Vector2(rect.size.x*0.5,rect.size.y*0.23)
+			var scale_factor := rect.size.x/192
+			draw_colored_polygon(PackedVector2Array([center+Vector2(side*12,0)*scale_factor,center+Vector2(side*44,-33)*scale_factor,center+Vector2(side*40,10)*scale_factor]),GOLD)
+
+func _draw() -> void:
+	if arena == null: return
+	if arena.paused or arena.show_help: return
+	if arena.screen == "select":
+		draw_selection()
+		return
+	if arena.paused or arena.show_help: return
+	if arena.fighters.size() != 2: return
+	draw_hud()
+	if arena.screen == "result": draw_result()
+	elif arena.intro_time > 0: draw_intro()
+	elif arena.cinematic > 0: draw_ca()
+	elif arena.banner_time > 0:
+		cut_panel(Rect2(376,154,400,36),Color(0.04,0.03,0.09,0.74))
+		middle(180,arena.banner,19,arena.banner_color)
+	if arena.demo_mode:
+		cut_panel(Rect2(384,514,384,27),Color(0.04,0.03,0.09,0.88))
+		middle(534,"SHOWCASE  %02d / 72s  ·  Enter 跳片段  ·  Esc 退出" % int(arena.demo_clock),13,GOLD)
+		draw_rect(Rect2(0,645,1152*clampf(arena.demo_clock/72,0,1),3),PINK)
+
+func draw_selection() -> void:
+	draw_rect(Rect2(0,0,1152,648),Color(0.035,0.025,0.075,0.94))
+	for i in range(12):
+		var x := float(i*126-200)+fmod(clock*10,126)
+		draw_line(Vector2(x,648),Vector2(x+330,0),Color(0.5,0.25,0.8,0.08),30)
+	draw_colored_polygon(selection_wedge(),Color(0.7,0.06,0.42,0.12))
+	label(Vector2(100,75),"MEME BRAWL",58,Color.WHITE,true)
+	label(Vector2(105,116),"模因乱斗：抽象食物链",27,GOLD)
+	right(Vector2(1045,67),"CHARACTER SELECT",20,PINK,true)
+	right(Vector2(1045,103),"6 FIGHTERS  /  FIRST TO 2",14,CYAN,true)
+	label(Vector2(105,141),"选择你的食物链位置",13,Color("8f8caa"))
+	for kind in range(6):
+		var x := 105+(kind%3)*320
+		var y := 157+(kind/3)*147
+		var selected: bool = kind == arena.selected
+		cut_panel(Rect2(x,y,300,149),Color("342047") if selected else Color("1b192c"))
+		draw_rect(Rect2(x,y,4,90),PINK if selected else Color("47415b"))
+		label(Vector2(x+14,y+29),"0%d" % (kind+1),20,PINK if selected else Color("706982"),true)
+		label(Vector2(x+14,y+56),"HP  %d" % R.HP[kind],13,Color("c5bed2"),true)
+		label(Vector2(x+14,y+76),"SPD  %d" % R.SPEED[kind],12,Color("817a98"),true)
+		actor(kind,Rect2(x+166,y-10,112,112))
+		if selected: label(Vector2(x+75,y+26),"P1",15,CYAN,true)
+	middle(635,"1–6 选角  ·  Enter 开战  ·  F3 演出鉴赏  ·  M 静音",14,Color("9992b1"))
+
+func selection_wedge() -> PackedVector2Array:
+	return PackedVector2Array([Vector2(790,0),Vector2(1152,0),Vector2(1152,648),Vector2(440,648)])
+
+func v_ratio(f: Node2D) -> float:
+	return clampf(f.v_meter/100 if f.kind >= 3 else 1-f.v_cooldown/7,0,1)
+
+func meter_count(f: Node2D) -> int:
+	return clampi(int(floor(f.meter)),0,3)
+
+func draw_hud() -> void:
+	draw_rect(Rect2(0,0,1152,133),Color(0.035,0.025,0.075,0.9))
+	draw_line(Vector2(0,132),Vector2(1152,132),Color("382b57"),2)
+	for side in range(2):
+		var f = arena.fighters[side]
+		var accent: Color = CYAN if side == 0 else PINK
+		var x := 104.0 if side == 0 else 647.0
+		var portrait_x := 19.0 if side == 0 else 1063.0
+		cut_panel(Rect2(portrait_x,15,70,88),accent.darkened(0.75),7)
+		actor(f.kind,Rect2(portrait_x-5,12,82,82))
+		label(Vector2(portrait_x+12,117),"P1" if side == 0 else ("DUM" if arena.training else "CPU"),15,accent,true)
+		if side == 0: label(Vector2(x,32),R.NAMES[f.kind],23,Color.WHITE)
+		else: right(Vector2(x+401,32),R.NAMES[f.kind],23,Color.WHITE)
+		var health := Rect2(x,43,401,28)
+		cut_panel(health.grow(3),Color("5b4a73"),9)
+		draw_rect(health,Color("3c1c3b"))
+		var fraction: float = clampf(f.hp/R.HP[f.kind],0,1)
+		var life_color := Color("99f5b3") if fraction > 0.5 else (Color("f5cf75") if fraction > 0.25 else Color("ff526c"))
+		var ghost: float = clampf(life_trail[side],fraction,1)
+		var ghost_x := x if side == 0 else x+401*(1-ghost)
+		draw_rect(Rect2(ghost_x,43,401*ghost,28),Color("ffd9a0"))
+		var filled_x := x if side == 0 else x+401*(1-fraction)
+		draw_rect(Rect2(filled_x,43,401*fraction,28),life_color)
+		draw_rect(Rect2(filled_x,43,401*fraction,6),life_color.lightened(0.35))
+		draw_rect(Rect2(filled_x,65,401*fraction,6),life_color.darkened(0.3))
+		if fraction <= 0.25 and fraction > 0:
+			draw_rect(health,Color(1,0.05,0.2,0.12+0.12*sin(clock*12)))
+		for segment in range(6):
+			var amount := clampf(v_ratio(f)*6-segment,0,1)
+			var gx := x+segment*44 if side == 0 else x+401-(segment+1)*44
+			draw_rect(Rect2(gx,79,39,9),Color("2c2341"))
+			draw_rect(Rect2(gx+(39*(1-amount) if side == 1 else 0),79,39*amount,9),Color("8cefca") if f.kind < 3 else Color("c799ff"))
+		var v_text := "V READY" if f.v_cooldown <= 0 else "V %.1fs" % f.v_cooldown
+		if f.kind >= 3: v_text = "V %03d / 100" % int(f.v_meter)
+		if side == 0:
+			label(Vector2(x,105),v_text,13,Color("bbb0d0"),true)
+			right(Vector2(x+401,102),"%d / %d" % [ceili(f.hp),R.HP[f.kind]],15,Color("ded5e8"),true)
+		else:
+			right(Vector2(x+401,105),v_text,13,Color("bbb0d0"),true)
+			label(Vector2(x,102),"%d / %d" % [ceili(f.hp),R.HP[f.kind]],15,Color("ded5e8"),true)
+		var status: String = R.V[f.kind]
+		if f.kind == 0 and f.v_time > 0: status = "迁徙 %.1fs  ·  %d/2 跳" % [f.v_time,f.jumps]
+		if f.kind == 2: status = "棱角再生 %.1fs" % f.horns if f.horns > 0 else "脆角就绪"
+		if f.kind == 4 and f.charging: status = "喊妈蓄力 %.1f / 2.5s" % f.charge
+		if f.trigger_time > 0: status = R.TRIGGERS[f.kind]+" %.1fs" % f.trigger_time
+		if side == 0: label(Vector2(x,124),status,12,accent)
+		else: right(Vector2(x+401,124),status,12,accent)
+		for pip in range(2):
+			var at := Vector2(478+pip*18 if side == 0 else 674-pip*18,119)
+			draw_colored_polygon(PackedVector2Array([at+Vector2(0,-5),at+Vector2(5,0),at+Vector2(0,5),at+Vector2(-5,0)]),GOLD if arena.round_wins[side] > pip else Color("473954"))
+		if arena.screen == "fight": draw_super(side,f,accent)
+		if arena.combo[side] > 1:
+			var cx := 42.0 if side == 0 else 900.0
+			label(Vector2(cx,230),"%02d" % arena.combo[side],62,accent,true)
+			label(Vector2(cx+88,224),"HITS",22,Color.WHITE,true)
+			label(Vector2(cx+3,254),"DAMAGE  %d" % arena.combo_damage[side],14,GOLD,true)
+		if arena.feedback_time[side] > 0:
+			var fx := 42.0 if side == 0 else 865.0
+			label(Vector2(fx,295),arena.feedback[side],19,accent,true)
+	cut_panel(Rect2(526,12,100,86),Color("392356"),15)
+	middle(76,"∞" if arena.training else "%02d" % ceili(arena.time_left),53,Color("ff927c") if arena.time_left <= 10 else Color.WHITE,not arena.training)
+	middle(115,"FINAL ROUND" if arena.round_wins == [1,1] else "ROUND %d" % arena.round_number,12,GOLD,true)
+	if arena.training: middle(151,"TRAINING  /  能量无限  /  R 重置",13,Color("b8acd2"))
+	else: middle(151,R.STAGES[arena.stage],12,Color("aba2bc"))
+	if arena.screen == "result":
+		middle(640,"Enter 继续  ·  Esc 返回角色选择",12,Color("a99abc"))
+	else:
+		middle(640,"WASD 移动  ·  JKL 拳  UIO 腿  ·  G 投  V 技能  B 触发  ·  F1 招式  Esc 暂停",12,Color("8e859f"))
+
+func draw_super(side: int, f: Node2D, accent: Color) -> void:
+	var x := 24.0 if side == 0 else 662.0
+	cut_panel(Rect2(x,552,466,72),Color(0.035,0.025,0.075,0.93),12)
+	var count := meter_count(f)
+	var ready := "CA READY" if count == 3 else ("EX AVAILABLE" if count >= 1 else "BUILD METER")
+	if side == 0:
+		label(Vector2(x+8,612),str(count),58,accent,true)
+		label(Vector2(x+78,571),ready,14,GOLD if count == 3 else accent,true)
+	else:
+		right(Vector2(x+452,612),str(count),58,accent,true)
+		right(Vector2(x+388,571),ready,14,GOLD if count == 3 else accent,true)
+	var bx := x+78 if side == 0 else x+6
+	for segment in range(3):
+		var fill := clampf(f.meter-segment,0,1)
+		var xx := bx+segment*126 if side == 0 else bx+(2-segment)*126
+		cut_panel(Rect2(xx,581,119,23),Color("332344"),5)
+		var width := 115*fill
+		var px := xx+2 if side == 0 else xx+117-width
+		draw_rect(Rect2(px,584,width,17),accent if count < 3 else GOLD)
+		if count == 3:
+			draw_rect(Rect2(xx+2,584,115,3),Color(1,1,1,0.35+0.3*sin(clock*8)))
+	var value := "SUPER  %.2f / 3" % f.meter
+	if side == 0: label(Vector2(x+80,619),value,11,Color("8e859f"),true)
+	else: right(Vector2(x+386,619),value,11,Color("8e859f"),true)
+
+func draw_intro() -> void:
+	var progress: float = 1-clampf(arena.intro_time/arena.intro_duration,0,1)
+	if arena.intro_time <= 0.75:
+		var zoom := 1+maxf(0,arena.intro_time-0.4)*0.8
+		draw_set_transform(Vector2(576,320),-0.035,Vector2.ONE*zoom)
+		var word := "FIGHT"
+		var width := DISPLAY.get_string_size(word,HORIZONTAL_ALIGNMENT_LEFT,-1,108).x
+		label(Vector2(-width/2+5,7),word,108,PINK,true)
+		label(Vector2(-width/2,0),word,108,Color.WHITE,true)
+		draw_set_transform(Vector2.ZERO)
+		return
+	draw_rect(Rect2(0,135,1152,405),Color(0.025,0.02,0.065,0.94))
+	var slide := (1-pow(1-minf(1,progress*4),3))*55
+	cut_panel(Rect2(-70+slide,147,545,345),CYAN.darkened(0.8),65)
+	cut_panel(Rect2(678-slide,147,545,345),PINK.darkened(0.8),65)
+	actor(arena.selected,Rect2(72+slide,162,275,275),progress > 0.35)
+	actor(arena.rival,Rect2(805-slide,162,275,275),progress > 0.35)
+	middle(325,"VS",91,GOLD,true)
+	label(Vector2(64,459),R.NAMES[arena.selected],30,CYAN)
+	right(Vector2(1088,459),R.NAMES[arena.rival],30,PINK)
+	label(Vector2(64,496),R.intro(arena.selected,arena.rival),17,Color("d5cde1"))
+	right(Vector2(1088,496),R.intro(arena.rival,arena.selected),17,Color("d5cde1"))
+	middle(524,"FIRST TO 2  ·  Enter / Space 跳过",13,Color("82778e"))
+
+func draw_ca() -> void:
+	var progress: float = 1-clampf(arena.cinematic/arena.ca_duration,0,1)
+	var color: Color = R.COLORS[arena.ca_kind]
+	draw_rect(Rect2(0,0,1152,648),Color("100b22"))
+	for n in range(14):
+		var y := float(n*54)-fmod(progress*360,54)
+		draw_line(Vector2(0,y+90),Vector2(1152,y-90),Color(color,0.12),18)
+	cut_panel(Rect2(-50,124,1250,376),color.darkened(0.76),120)
+	actor(arena.ca_kind,Rect2(90+progress*55,110,390,390),true)
+	label(Vector2(510,247),"CRITICAL",48,Color.WHITE,true)
+	label(Vector2(510,303),"ART",54,color,true)
+	label(Vector2(510,367),R.CA[arena.ca_kind],37,GOLD)
+	label(Vector2(513,407),R.NAMES[arena.ca_kind],20,Color("cbbce0"))
+	draw_rect(Rect2(0,501,1152*progress,4),color)
+	middle(554,"Enter / Space 跳过特写 · 攻击与能量消耗照常结算",13,Color("93859f"))
+
+func draw_result() -> void:
+	var t: float = arena.result_time
+	if t < 0.85:
+		draw_rect(Rect2(0,155,1152,340),Color(0.03,0.02,0.07,0.78))
+		var scale_value := 1+maxf(0,0.4-t)*1.6
+		draw_set_transform(Vector2(576,345),-0.05,Vector2.ONE*scale_value)
+		label(Vector2(-153,10),"K.O.",130,PINK,true)
+		label(Vector2(-158,0),"K.O.",130,GOLD,true)
+		draw_set_transform(Vector2.ZERO)
+		return
+	cut_panel(Rect2(240,168,672,353),Color(0.055,0.035,0.115,0.96),35)
+	var f = arena.fighters[arena.winner]
+	middle(210,"MATCH WINNER" if arena.match_complete else "ROUND WINNER",24,CYAN if arena.winner == 0 else PINK,true)
+	middle(270,R.NAMES[f.kind],44,Color.WHITE)
+	middle(316,"%d  —  %d" % [arena.round_wins[0],arena.round_wins[1]],28,GOLD,true)
+	middle(356,R.WIN[f.kind],22,R.COLORS[f.kind])
+	if arena.match_complete:
+		middle(406,R.ending(f.kind,arena.fighters[1-arena.winner].kind),17,Color("c5b7d3"))
+		middle(471,"食物链永恒循环。下一次，谁是猎物？",16,Color("8f7e9e"))
+	else:
+		middle(406,"下一回合 · 生命恢复 · 超必杀能量保留",18,Color("c5b7d3"))
+		middle(471,"FIRST TO 2",20,GOLD,true)

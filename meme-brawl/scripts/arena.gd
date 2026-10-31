@@ -1,9 +1,11 @@
 extends Node2D
 
+const ArcadeArt = preload("res://scripts/arcade_skin.gd")
 const R = preload("res://scripts/roster.gd")
 const Frames = preload("res://scripts/sprite_frames.gd")
 const Presentation = preload("res://scripts/fight_presentation.gd")
 const Fighter = preload("res://scripts/fighter.gd")
+const DISPLAY = preload("res://assets/fonts/ArcadeDisplay.ttf")
 const FONT = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
 var controls = preload("res://scripts/input_profile.gd").new()
 var settings_return := "select"
@@ -11,6 +13,9 @@ var settings_was_paused := false
 var settings_backup: Dictionary = {}
 var capturing_action := ""
 var settings_message := "点击按键按钮，再按新键；保存后下次启动仍然生效。"
+var mode_index := 0
+var menu_items: Array = []
+var hovered_menu := ""
 var select_target := 0
 var hovered_character := -1
 var fighters: Array = []
@@ -128,66 +133,108 @@ func clear_ui() -> void:
 func button(text: String, rect: Rect2, action: Callable, color := Color("303b4c")) -> void:
 	var b := Button.new()
 	b.focus_mode = Control.FOCUS_NONE
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	b.text = text
 	b.position = rect.position
 	b.size = rect.size
 	b.add_theme_font_override("font", FONT)
 	b.add_theme_font_size_override("font_size", 18)
 	var style := StyleBoxFlat.new()
-	style.bg_color = color.lerp(Color("141224"),0.35)
-	style.border_color = color.lightened(0.4)
-	style.set_border_width_all(2)
-	style.content_margin_left = 12
-	style.content_margin_right = 12
-	b.add_theme_stylebox_override("normal", style)
+	var primary := color == ArcadeArt.EMBER
+	style.bg_color = ArcadeArt.EMBER if primary else Color("18212d")
+	style.border_color = color.lightened(0.35)
+	style.border_width_left = 3
+	style.content_margin_left = 14
+	style.content_margin_right = 14
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_right = 4
+	b.add_theme_color_override("font_color",ArcadeArt.BG if primary else ArcadeArt.PAPER)
+	b.add_theme_color_override("font_hover_color",ArcadeArt.BG if primary else Color.WHITE)
+	b.add_theme_color_override("font_pressed_color",ArcadeArt.EMBER)
+	b.add_theme_stylebox_override("normal",style)
 	var hover := style.duplicate()
-	hover.bg_color = color.lightened(0.22)
-	b.add_theme_stylebox_override("hover", hover)
-	var focus := style.duplicate()
-	focus.border_color = Color.WHITE
-	focus.set_border_width_all(3)
-	b.add_theme_stylebox_override("focus",focus)
+	hover.bg_color = ArcadeArt.EMBER.lightened(0.15) if primary else Color("2b3542")
+	hover.border_color = ArcadeArt.EMBER
+	b.add_theme_stylebox_override("hover",hover)
+	var pressed := hover.duplicate()
+	pressed.bg_color = Color("40414a")
+	b.add_theme_stylebox_override("pressed",pressed)
 	b.pressed.connect(action)
 	panel.add_child(b)
 
 func grid_rect(kind: int) -> Rect2:
-	return Rect2(365+(kind%3)*142,206+(kind/3)*124,132,114)
+	return Rect2(32+kind*112,520,102,94)
+
+func hotspot(rect: Rect2, action: Callable, title := "", id := "") -> void:
+	var b := Button.new()
+	b.position = rect.position
+	b.size = rect.size
+	b.focus_mode = Control.FOCUS_NONE
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	b.tooltip_text = title
+	for state in ["normal","hover","pressed","focus"]: b.add_theme_stylebox_override(state,StyleBoxEmpty.new())
+	b.pressed.connect(action)
+	if id != "":
+		b.mouse_entered.connect(set_menu_hover.bind(id))
+		b.mouse_exited.connect(set_menu_hover.bind(""))
+	panel.add_child(b)
+
+func menu_rect(id: String) -> Rect2:
+	for item in menu_items:
+		if item.id == id: return item.rect
+	return Rect2()
+
+func set_menu_hover(id: String) -> void:
+	hovered_menu = id
+
+func preview_rival() -> int:
+	return (selected+1)%R.NAMES.size() if mode_index == 1 else rival
+
+func mode_name() -> String:
+	return ["VERSUS","ARCADE","TRAINING"][mode_index]
+
+func set_mode(index: int) -> void:
+	mode_index = posmod(index,3)
+	if mode_index == 1: select_target = 0
+	build_menu()
+
+func start_chosen_mode() -> void:
+	start_match(mode_index == 2,mode_index == 1)
 
 func build_menu() -> void:
 	clear_ui()
 	for kind in range(R.NAMES.size()):
-		var b := Button.new()
-		b.position = grid_rect(kind).position
-		b.size = grid_rect(kind).size
-		b.focus_mode = Control.FOCUS_NONE
-		b.tooltip_text = R.NAMES[kind]+" · "+R.ROLES[kind]
-		for state in ["normal","hover","pressed","focus"]: b.add_theme_stylebox_override(state,StyleBoxEmpty.new())
-		b.pressed.connect(choose_grid.bind(kind))
+		hotspot(grid_rect(kind),choose_grid.bind(kind),R.NAMES[kind]+" · "+R.ROLES[kind])
+		var b: Button = panel.get_child(kind)
 		b.mouse_entered.connect(hover_character.bind(kind))
 		b.mouse_exited.connect(hover_character.bind(-1))
-		panel.add_child(b)
-	button("1P · 选择角色",Rect2(365,153,200,35),set_select_target.bind(0),Color("23767b") if select_target == 0 else Color("252438"))
-	button("CPU · 选择对手",Rect2(581,153,200,35),set_select_target.bind(1),Color("873a72") if select_target == 1 else Color("252438"))
-	button("舞台 · "+R.STAGES[stage],Rect2(36,486,340,36),cycle_stage)
-	button("AI · "+("标准" if difficulty == 1 else "激烈"),Rect2(406,486,340,36),cycle_difficulty)
-	button("F2 · 设置 / 自定义键位",Rect2(776,486,340,36),open_settings,Color("4b3a67"))
-	button("对战  →",Rect2(36,538,340,46),start_match.bind(false,false),Color("2e797d"))
-	button("街机 · 食物链巡回",Rect2(406,538,340,46),start_match.bind(false,true),Color("6a467e"))
-	button("练习 · 角色演练",Rect2(776,538,340,46),start_match.bind(true,false),Color("8a4771"))
-	button("F1 · 招式与操作",Rect2(36,597,340,30),toggle_help)
-	button("F3 · 演出鉴赏",Rect2(406,597,340,30),start_demo)
-	button("M · 声音 "+("关闭" if muted else "开启"),Rect2(776,597,340,30),toggle_mute)
+	menu_items = [
+		{"id":"p1","rect":Rect2(448,492,106,23),"action":set_select_target.bind(0)},
+		{"id":"cpu","rect":Rect2(568,492,126,23),"action":set_select_target.bind(1)},
+		{"id":"mode0","rect":Rect2(650,74,150,53),"action":set_mode.bind(0)},
+		{"id":"mode1","rect":Rect2(810,74,150,53),"action":set_mode.bind(1)},
+		{"id":"mode2","rect":Rect2(970,74,150,53),"action":set_mode.bind(2)},
+		{"id":"stage","rect":Rect2(744,493,240,49),"action":cycle_stage},
+		{"id":"difficulty","rect":Rect2(1000,493,120,49),"action":cycle_difficulty},
+		{"id":"confirm","rect":Rect2(744,555,376,59),"action":start_chosen_mode},
+		{"id":"settings","rect":Rect2(924,17,105,31),"action":open_settings},
+		{"id":"help","rect":Rect2(1035,17,85,31),"action":toggle_help},
+		{"id":"showcase","rect":Rect2(810,17,106,31),"action":start_demo}]
+	for item in menu_items: hotspot(item.rect,item.action,"",item.id)
 
 func hover_character(kind: int) -> void:
 	hovered_character = kind
 
 func set_select_target(side: int) -> void:
+	if mode_index == 1 and side == 1: return
 	select_target = side
 	build_menu()
 
 func choose_grid(kind: int) -> void:
 	if select_target == 0: selected = kind
 	else: rival = kind
+	presentation.selection_age = 0
+	combat_audio.play_clip("swing",0,true)
 	build_menu()
 
 func hint(value: String) -> String:
@@ -214,10 +261,10 @@ func build_settings() -> void:
 		var action: String = controls.ORDER[index]
 		var x := 300.0 if index < 10 else 840.0
 		var y := 144.0+(index%10)*37
-		button("等待按键…" if capturing_action == action else controls.label(action),Rect2(x,y,240,32),capture_binding.bind(action),Color("297d87") if capturing_action == action else Color("33334e"))
+		button("等待按键…" if capturing_action == action else controls.label(action),Rect2(x,y,240,32),capture_binding.bind(action),ArcadeArt.EMBER if capturing_action == action else Color("3e5364"))
 	button("恢复默认 U / I / O / P",Rect2(60,552,330,44),reset_bindings)
 	button("取消修改",Rect2(411,552,250,44),close_settings.bind(false))
-	button("保存并返回",Rect2(682,552,410,44),close_settings.bind(true),Color("2d777b"))
+	button("保存并返回",Rect2(682,552,410,44),close_settings.bind(true),ArcadeArt.EMBER)
 
 func capture_binding(action: String) -> void:
 	capturing_action = action
@@ -245,7 +292,7 @@ func close_settings(save: bool) -> void:
 	clear_ui()
 	if screen == "select": build_menu()
 	elif paused:
-		button("继续对战",Rect2(426,285,300,50),resume)
+		button("继续对战",Rect2(426,285,300,50),resume,ArcadeArt.EMBER)
 		button("F2 设置 / 修改键位",Rect2(426,350,300,50),open_settings)
 		button("返回角色选择",Rect2(426,415,300,50),back_to_menu)
 	elif screen == "result":
@@ -385,7 +432,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		elif screen == "fight":
 			paused = not paused
 			if paused:
-				button("继续对战",Rect2(426,285,300,50),resume)
+				button("继续对战",Rect2(426,285,300,50),resume,ArcadeArt.EMBER)
 				button("F2 设置 / 修改键位",Rect2(426,350,300,50),open_settings)
 				button("返回角色选择",Rect2(426,415,300,50),back_to_menu)
 			else: clear_ui()
@@ -394,11 +441,13 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	if screen == "select":
 		if key == KEY_TAB: set_select_target(1-select_target)
+		if key == KEY_Q: set_mode(mode_index-1)
+		if key == KEY_E: set_mode(mode_index+1)
 		if key in [KEY_LEFT,KEY_RIGHT,KEY_UP,KEY_DOWN]:
 			var current: int = selected if select_target == 0 else rival
-			var offset := -1 if key == KEY_LEFT else (1 if key == KEY_RIGHT else (-3 if key == KEY_UP else 3))
+			var offset := -1 if key in [KEY_LEFT,KEY_UP] else 1
 			choose_grid(posmod(current+offset,6))
-		if key == KEY_ENTER: start_match()
+		if key == KEY_ENTER: start_chosen_mode()
 		if key == KEY_1: choose_grid(0)
 		if key == KEY_2: choose_grid(1)
 		if key == KEY_3: choose_grid(2)
@@ -577,7 +626,7 @@ func finish(side: int) -> void:
 		fighters[team].position = Vector2(145 if team == 0 else 1007,510)
 		fighters[team].visual.play("win" if team == side else "ko",1.8)
 	announce("K.O.",Color("f0c883"))
-	button("再战" if match_complete else "下一回合",Rect2(265,530,290,52),primary_result,Color("805035"))
+	button("再战" if match_complete else "下一回合",Rect2(265,530,290,52),primary_result,ArcadeArt.EMBER)
 	button("返回角色选择",Rect2(580,530,310,52),back_to_menu)
 	if arcade and side == 0 and match_complete and arcade_wins < R.NAMES.size()-2:
 		panel.get_child(0).text = "下一场 · 食物链继续"
@@ -741,7 +790,8 @@ func _draw() -> void:
 				draw_rect(Rect2(0,122,1152,418),Color(0.65,0.025,0.015,0.18))
 	if paused:
 		draw_rect(Rect2(0,0,1152,648),Color(0,0,0,0.65))
-		center(225,"食物链暂停",42,Color("f2d7a0"))
+		draw_string(DISPLAY,Vector2(424,230),"PAUSE",HORIZONTAL_ALIGNMENT_LEFT,-1,64,ArcadeArt.PAPER)
+		center(263,"食物链暂时停止",18,ArcadeArt.EMBER)
 	if show_help: draw_help()
 	# Thin CRT scanlines over the procedural low-resolution shapes.
 	for y in range(0,648,4):
@@ -785,8 +835,14 @@ func draw_stage() -> void:
 	draw_rect(Rect2(0,540,1152,108),Color(0.02,0.025,0.035,0.36))
 
 func draw_settings() -> void:
-	draw_rect(Rect2(0,0,1152,648),Color("111121"))
-	text(Vector2(60,65),"设置 · 键盘映射",32,Color("7de8ed"))
+	ArcadeArt.backdrop(self,elapsed,false)
+	draw_line(Vector2(575,142),Vector2(575,509),Color("2c3948"),1)
+	for row in range(10):
+		if row%2 == 0:
+			draw_rect(Rect2(52,142+row*37,496,35),Color(0.1,0.16,0.2,0.25))
+			if row < 9: draw_rect(Rect2(592,142+row*37,496,35),Color(0.1,0.16,0.2,0.25))
+	draw_string(DISPLAY,Vector2(60,65),"CONTROLS",HORIZONTAL_ALIGNMENT_LEFT,-1,42,ArcadeArt.PAPER)
+	text(Vector2(367,65),"键盘映射",24,ArcadeArt.PAPER)
 	text(Vector2(60,103),settings_message,17,Color("f1d397"))
 	for index in range(controls.ORDER.size()):
 		var action: String = controls.ORDER[index]
@@ -795,9 +851,12 @@ func draw_settings() -> void:
 	text(Vector2(60,629),"按键不允许重复；设置与招式提示同步更新。EX 可改为修饰键或其他空闲键。",15,Color("a49ab8"))
 
 func draw_help() -> void:
-	draw_rect(Rect2(0,0,1152,648),Color("121324"))
-	text(Vector2(67,65),R.NAMES[selected]+" · 简易出招表",30,R.COLORS[selected])
-	text(Vector2(67,108),R.ROLES[selected],24,Color("f0d18e"))
+	ArcadeArt.backdrop(self,elapsed,false)
+	draw_line(Vector2(64,171),Vector2(1088,171),ArcadeArt.EMBER,2)
+	draw_portrait(Vector2(1020,87),selected)
+	text(Vector2(67,65),R.NAMES[selected]+" · 简易出招表",30,ArcadeArt.PAPER)
+	draw_string(DISPLAY,Vector2(680,65),"MOVE LIST",HORIZONTAL_ALIGNMENT_LEFT,-1,25,ArcadeArt.EMBER)
+	text(Vector2(67,108),R.ROLES[selected],24,ArcadeArt.EMBER)
 	text(Vector2(67,151),hint("{left}/{right} 移动 · {jump} 跳 · {crouch} 蹲 · {light}/{medium}/{heavy} 攻击 · 远离=格挡"),20)
 	for move in range(3):
 		text(Vector2(70,215+move*51),controls.label("skill"+str(move+1))+"   "+R.SPECIALS[selected][move],24,R.COLORS[selected])

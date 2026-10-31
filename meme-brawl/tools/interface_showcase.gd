@@ -20,6 +20,7 @@ class Director:
 			phase_done = phase
 			match phase:
 				1:
+					arena.set_mode(2)
 					arena.selected = 1
 					arena.rival = 5
 					arena.build_menu()
@@ -33,6 +34,7 @@ class Director:
 				5: arena.reset_bindings()
 				6:
 					arena.close_settings(false)
+					arena.set_mode(0)
 					arena.selected = 3
 					arena.rival = 4
 					arena.build_menu()

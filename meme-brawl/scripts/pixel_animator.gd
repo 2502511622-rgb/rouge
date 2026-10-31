@@ -2,6 +2,7 @@ extends Node2D
 ## Isolated pose textures + per-frame pose, offset, rotation and squash keys.
 ## These are original assets; this is not a rip of a meme video or another game.
 
+const Motion = preload("res://scripts/skill_motion.gd")
 const Frames = preload("res://scripts/sprite_frames.gd")
 const ATLAS_PATH = "res://assets/art/meme_fighters_atlas.png"
 const CLIPS = {
@@ -50,6 +51,7 @@ var state := "idle"
 var clock := 0.0
 var duration := 0.6
 var locked := false
+var recorded: Dictionary = {}
 
 func _ready() -> void:
 	var path: String = DUO_PATHS.get(fighter.kind,ATLAS_PATH)
@@ -68,7 +70,7 @@ func play(clip: String, seconds := 0.6) -> void:
 
 func _process(dt: float) -> void:
 	if fighter == null: return
-	if fighter.arena.paused or fighter.arena.show_help: return
+	if fighter.arena.paused or fighter.arena.show_help or fighter.arena.hit_pause > 0: return
 	clock += dt
 	if locked and clock >= duration:
 		if state in ["ko","win"]:
@@ -129,6 +131,11 @@ func _draw() -> void:
 	elif state in ["v","trigger","charge","taunt","win"]:
 		offset.y = -absf(beat)*8
 		angle = beat*0.08
+	if state.begins_with("special_") or state.begins_with("ex_"):
+		var motion: Dictionary = Motion.sample(fighter.kind,int(state.right(1)),state.begins_with("ex_"),t)
+		offset = motion.offset
+		angle = motion.angle
+		scale_pose = motion.scale
 	if dedicated and state == "ko":
 		angle = 0
 		offset = Vector2(-10*minf(1,t*2),0)
@@ -154,6 +161,7 @@ func _draw() -> void:
 	var index: int = row if dedicated else row*6+fighter.kind
 	var pose: Dictionary = Frames.get_frame(sheet,index)
 	var isolated: Texture2D = pose.texture
+	recorded = {"texture":isolated,"rect":Frames.battle_rect(pose,Rect2(-96,-96,192,192)),"transform":Transform2D(angle*face,scale_pose*Vector2(face,1),0,Vector2(0,-88)+offset*Vector2(face,1))}
 	var tint := Color.WHITE
 	if fighter.flash > 0: tint = Color(2.2,1.5,1.3)
 	if state.begins_with("ex"):
@@ -173,3 +181,9 @@ func _draw() -> void:
 			draw_colored_polygon(chip,Color("ecb439"))
 			draw_polyline(PackedVector2Array([chip[0],chip[1],chip[2],chip[0]]),Color("744c22"),2)
 	draw_set_transform(Vector2.ZERO)
+
+func snapshot() -> Dictionary:
+	if recorded.is_empty(): return {}
+	var result := recorded.duplicate()
+	result.transform = fighter.transform * recorded.transform
+	return result

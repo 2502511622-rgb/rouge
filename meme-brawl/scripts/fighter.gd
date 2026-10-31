@@ -105,6 +105,9 @@ func tick(dt: float, controlled: bool) -> void:
 	if position.y >= 532:
 		position.y = 532
 		velocity.y = 0
+		if not grounded:
+			arena.fx.emit("land",position-Vector2(0,50),kind,0.32,facing,slam_pending)
+			arena.combat_audio.play_clip("quake" if slam_pending else "land",1,true)
 		grounded = true
 		jumps = 0
 		if slam_pending:
@@ -203,8 +206,10 @@ func normal(strength: int, kick: bool) -> void:
 	if cooldown > 0 or active > 0: return
 	var low := crouching and kick and not (kind == 5 and trigger_time > 0)
 	var damage: float = [38, 65, 95][strength] * (0.85 if kind == 2 else (1.25 if kind == 4 else 1.0))
-	begin_attack({"damage": damage, "range": [88, 112, 145][strength] + (20 if kick else 0), "low": low, "air": not grounded or (kind == 5 and trigger_time > 0 and kick), "push": 145 + strength * 65, "cancelable": true, "startup": 0.09 + strength*0.035 if kind == 2 else 0.0}, 0.16 + strength * 0.06, 0.23 + strength * 0.13)
+	begin_attack({"strength": strength, "kick": kick, "damage": damage, "range": [88, 112, 145][strength] + (20 if kick else 0), "low": low, "air": not grounded or (kind == 5 and trigger_time > 0 and kick), "push": 145 + strength * 65, "cancelable": true, "startup": 0.09 + strength*0.035 if kind == 2 else 0.0}, 0.16 + strength * 0.06, 0.23 + strength * 0.13)
 	visual.play(("kick_" if kick else "punch_")+str(strength),cooldown)
+	arena.combat_audio.play_clip("kick" if kick else "swing",strength)
+	arena.fx.emit("kick" if kick else "slash",position+Vector2(facing*35,-75),kind,0.22,facing,strength == 2)
 	meter = minf(3, meter + 0.025)
 
 func begin_attack(data: Dictionary, duration: float, recovery: float) -> void:
@@ -219,7 +224,6 @@ func begin_attack(data: Dictionary, duration: float, recovery: float) -> void:
 	cooldown = (recovery + attack_startup) * (0.65 if kind == 3 and trigger_time > 0 else 1.0)
 	connected = false
 	remaining_hits = 0
-	arena.sound(kind, "swing")
 
 func special(move: int, use_ex: bool) -> void:
 	# Double-heavy may upgrade the immediately preceding normal into an EX.
@@ -230,21 +234,19 @@ func special(move: int, use_ex: bool) -> void:
 	if use_ex: meter -= 1
 	last_special_at = clock if not use_ex else -10.0
 	last_special_move = move
+	arena.skill_fx(self,move,use_ex)
 	var empowered := use_ex or (kind == 0 and v_time > 0 and move != 0)
 	say(R.EX[kind][move] if use_ex else R.SPECIALS[kind][move])
 	visual.play(("ex_" if use_ex else "special_")+str(move),0.85 if use_ex else 0.65)
 	motion.clear()
 	if kind == 0:
 		penguin_special(move, empowered)
-		arena.sound(kind,"special")
 		return
 	if kind == 2:
 		cat_special(move, use_ex)
-		arena.sound(kind,"special")
 		return
 	if kind >= 3:
 		dlc_special(move, use_ex)
-		arena.sound(kind, "special")
 		return
 	if move == 0 and kind != 1:
 		var count := 3 if empowered else 1
@@ -272,7 +274,6 @@ func special(move: int, use_ex: bool) -> void:
 			grounded = false
 			velocity.y = -430
 		if empowered: invulnerable = 0.22
-	arena.sound(kind, "special")
 
 func penguin_special(move: int, empowered: bool) -> void:
 	if move == 0:
@@ -405,6 +406,7 @@ func super_move() -> void:
 		grounded = false
 		velocity.y = -300
 	visual.play("ca",arena.ca_duration+1.25)
+	arena.fx.emit("ca",position+Vector2(0,-75),kind,arena.ca_duration+0.8,facing,true)
 	arena.sound(kind, "ca")
 
 func throw_move() -> void:
@@ -454,7 +456,7 @@ func receive(data: Dictionary, source: Node2D) -> void:
 	if armor > 0 and not is_throw:
 		stun = 0
 		flash = 0.12
-		arena.hit_effect(position + Vector2(0,-70), false, damage,source.side,linked,hit_note)
+		arena.hit_effect(position + Vector2(0,-70), false, damage,source.side,linked,hit_note,data)
 		if hp <= 0: arena.finish(source.side)
 		return
 	active = 0
@@ -469,9 +471,8 @@ func receive(data: Dictionary, source: Node2D) -> void:
 		velocity.y = -260
 		grounded = false
 	flash = 0.12
-	arena.hit_effect(position + Vector2(0, -70), guarded, damage,source.side,linked,hit_note)
+	arena.hit_effect(position + Vector2(0, -70), guarded, damage,source.side,linked,hit_note,data)
 	visual.play("ko" if hp <= 0 else ("block" if guarded else "hit"),0.8 if hp <= 0 else 0.28)
-	arena.sound(kind, "block" if guarded else "hit")
 	if hp <= 0:
 		arena.finish(source.side)
 

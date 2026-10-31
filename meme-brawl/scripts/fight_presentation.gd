@@ -181,7 +181,7 @@ func draw_hud() -> void:
 	cut_panel(Rect2(526,12,100,86),Color("392356"),15)
 	middle(76,"∞" if arena.training else "%02d" % ceili(arena.time_left),53,Color("ff927c") if arena.time_left <= 10 else Color.WHITE,not arena.training)
 	middle(115,"FINAL ROUND" if arena.round_wins == [1,1] else "ROUND %d" % arena.round_number,12,GOLD,true)
-	if arena.training: middle(151,"TRAINING  /  能量无限  /  R 重置",13,Color("b8acd2"))
+	if arena.training: middle(151,"TRAINING / 1–3 必杀 · Shift EX · 4 CA / R 重置",13,Color("b8acd2"))
 	else: middle(151,R.STAGES[arena.stage],12,Color("aba2bc"))
 	if arena.screen == "result":
 		middle(640,"Enter 继续  ·  Esc 返回角色选择",12,Color("a99abc"))

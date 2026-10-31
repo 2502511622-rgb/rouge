@@ -10,6 +10,8 @@
 
 ![新版战斗界面](meme-brawl/docs/ui/hud.png)
 
+新增六角色技能特效、突进残影、分层打击音效、命中顿帧与必杀动作曲线。练习模式支持 1–3 必杀、Shift+数字 EX、4 CA。[效果与验证说明](meme-brawl/docs/COMBAT_EFFECTS.md)。
+
 ---
 
 # Windows 启动器与 Godot 逆向工作台

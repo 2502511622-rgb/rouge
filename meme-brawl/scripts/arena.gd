@@ -27,6 +27,10 @@ var banner_color := Color.WHITE
 var banner_time := 0.0
 var elapsed := 0.0
 var shake := 0.0
+var hit_pause := 0.0
+var shake_strength := 0.0
+var fx: Node2D
+var combat_audio: Node
 var paused := false
 var show_help := false
 var muted := false
@@ -86,6 +90,13 @@ func _ready() -> void:
 		var player := AudioStreamPlayer.new()
 		add_child(player)
 		sound_players.append(player)
+	fx = preload("res://scripts/combat_fx.gd").new()
+	fx.arena = self
+	fx.z_index = 4
+	add_child(fx)
+	combat_audio = preload("res://scripts/combat_audio.gd").new()
+	combat_audio.arena = self
+	add_child(combat_audio)
 	build_menu()
 	if "--smoke-test" in OS.get_cmdline_user_args():
 		smoke = true
@@ -187,6 +198,9 @@ func new_round() -> void:
 	fighters.clear()
 	projectiles.clear()
 	effects.clear()
+	fx.clear()
+	hit_pause = 0
+	position = Vector2.ZERO
 	combo = [0,0]
 	combo_timer = [0.0,0.0]
 	combo_damage = [0,0]
@@ -262,7 +276,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		if key == KEY_5: choose(4)
 		if key == KEY_6: choose(5)
 	elif screen == "fight" and not paused and not show_help and intro_time <= 0 and cinematic <= 0:
-		if training and key == KEY_R: new_round()
+		if training and key >= KEY_1 and key <= KEY_3:
+			fighters[0].special(key-KEY_1,event.shift_pressed)
+		elif training and key == KEY_4: fighters[0].super_move()
+		elif training and key == KEY_R: new_round()
 		else: fighters[0].press(key)
 
 func resume() -> void:
@@ -286,12 +303,15 @@ func _physics_process(dt: float) -> void:
 		f.visible = screen in ["fight","result"] and not show_help and not paused and cinematic <= 0
 	banner_time = maxf(0,banner_time-dt)
 	shake = maxf(0,shake-dt)
+	var frozen := hit_pause > 0
+	if not paused and not show_help: hit_pause = maxf(0,hit_pause-dt)
+	position = Vector2(sin(elapsed*145),cos(elapsed*123))*shake_strength*(shake/0.16) if shake > 0 and screen == "fight" and not paused and not show_help else Vector2.ZERO
 	if screen == "fight" and not paused and not show_help:
 		if intro_time > 0:
 			intro_time -= dt
 		elif cinematic > 0:
 			cinematic -= dt
-		else:
+		elif not frozen:
 			if not training: time_left = maxf(0,time_left-dt)
 			fighters[0].tick(dt,not demo_mode)
 			if screen == "fight": fighters[1].tick(dt,false)
@@ -365,10 +385,16 @@ func tick_projectiles(dt: float) -> void:
 			else: p.life = 0
 	projectiles = projectiles.filter(func(p): return p.life > 0 and p.position.x > -70 and p.position.x < 1220)
 
-func hit_effect(at: Vector2, guarded: bool, damage: float, attacker := -1, linked := false, note := "") -> void:
+func hit_effect(at: Vector2, guarded: bool, damage: float, attacker := -1, linked := false, note := "", data: Dictionary = {}) -> void:
 	effects.append({"at":at,"life":0.32,"guard":guarded,"damage":roundi(damage)})
 	shake = 0.08 if guarded else 0.16
 	if attacker < 0: return
+	var strength := int(data.get("strength",2 if damage >= 90 or data.get("ca",false) else (1 if damage >= 50 else 0)))
+	var source = fighters[attacker]
+	fx.impact(at,source.kind,guarded,strength,data,source.facing)
+	combat_audio.impact(source.kind,guarded,strength,data,fighters[1-attacker].kind == 1)
+	hit_pause = maxf(hit_pause,0.015 if guarded else (0.065 if strength == 2 else 0.035))
+	shake_strength = 1.5 if guarded else (6 if strength == 2 else 3)
 	if not guarded:
 		if not linked:
 			combo[attacker] = 0
@@ -430,6 +456,7 @@ func toggle_mute() -> void:
 	muted = not muted
 	if muted:
 		for player in sound_players: player.stop()
+		combat_audio.stop_all()
 	if screen == "select": build_menu()
 
 func begin_ca(kind: int, side := 0) -> void:
@@ -497,7 +524,12 @@ func update_demo(dt: float) -> void:
 			finish(0)
 		panel.visible = false
 
-func sound(kind: int, action: String) -> void:
+func skill_fx(f: Node2D, move: int, ex: bool) -> void:
+	fx.skill(f,move,ex)
+	combat_audio.skill(f.kind,move,ex)
+	sound(f.kind,"special",false)
+
+func sound(kind: int, action: String, fallback := true) -> void:
 	if muted or smoke: return
 	var player: AudioStreamPlayer = sound_players[0]
 	for candidate in sound_players:
@@ -509,6 +541,10 @@ func sound(kind: int, action: String) -> void:
 		player.stream = load(path)
 		player.volume_db = -6
 	else:
+		if not fallback: return
+		if action in ["v","trigger","ca"]:
+			combat_audio.play_clip("ca" if action == "ca" else "power")
+			return
 		# Original synthesis only; no borrowed meme recordings bundled.
 		var wav := AudioStreamWAV.new()
 		wav.format = AudioStreamWAV.FORMAT_16_BITS
@@ -545,31 +581,6 @@ func _draw() -> void:
 		for f in fighters:
 			if f.kind == 3 and f.trigger_time > 0:
 				draw_rect(Rect2(0,122,1152,418),Color(0.65,0.025,0.015,0.18))
-	if screen != "select":
-		for p in projectiles:
-			if p.delay > 0: continue
-			var pos: Vector2 = p.position
-			var color: Color = R.COLORS[int(p.kind)]
-			if p.kind == 5:
-				draw_rect(Rect2(pos-Vector2(23,20),Vector2(46,40)),Color("e7b723"))
-				draw_line(pos-Vector2(23,0),pos+Vector2(23,0),Color("654d22"),4)
-			elif p.kind == 3:
-				draw_circle(pos,22,Color("cab52b"))
-				draw_circle(pos+Vector2(12,12),13,Color("e0cc45"))
-			elif p.kind == 0:
-				draw_arc(pos,25,-1.4,1.4,8,color,7)
-				draw_arc(pos-Vector2(12,0),17,-1.4,1.4,6,color.lightened(0.4),4)
-			else:
-				var triangle := PackedVector2Array([pos+Vector2(-18,15),pos+Vector2(0,-22 if not p.flat else -4),pos+Vector2(20,15)])
-				draw_colored_polygon(triangle,Color("d2a86d") if p.flat else Color("f2b337"))
-				if p.trap: draw_line(pos+Vector2(-23,7),pos+Vector2(23,7),Color("ffe6a0"),3)
-		for e in effects:
-			var pos: Vector2 = e.at
-			var color := Color("73bbff") if e.guard else Color("ffe2a2")
-			for j in range(8):
-				var ray := Vector2.from_angle(j*TAU/8)
-				draw_line(pos+ray*12,pos+ray*(30+(0.32-e.life)*90),color,4)
-			text(pos+Vector2(-15,-50),"防御" if e.guard else str(e.damage),23,color)
 	if paused:
 		draw_rect(Rect2(0,0,1152,648),Color(0,0,0,0.65))
 		center(225,"食物链暂停",42,Color("f2d7a0"))
@@ -629,7 +640,7 @@ func draw_help() -> void:
 	text(Vector2(67,478),"方向相对朝向 · 0.85 秒缓冲 · Shift+必杀 = EX（1 格）· CA 消耗 3 格",18)
 	text(Vector2(67,520),"原三角克制保留 +8%；新角色无额外属性克制。投技可破当身与霸体。",18)
 	text(Vector2(67,564),"奶蛙：触发时防御降低 / 牛来：蓄力受击清空 / 袋鼠：触发踢技为中段",18)
-	text(Vector2(67,602),"Enter/Space 跳过特写 · F3 演出鉴赏 · 先胜两个回合获胜",16,Color("9cabb8"))
+	text(Vector2(67,602),"练习 1/2/3 必杀 · Shift+数字 EX · 4 CA · Enter 跳过 · F3 鉴赏",16,Color("9cabb8"))
 
 func run_dlc_checks() -> void:
 	# Frogs must earn a hit-confirm before spending their cancel resource.

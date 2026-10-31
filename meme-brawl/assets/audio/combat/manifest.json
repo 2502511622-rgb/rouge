@@ -1,0 +1,101 @@
+{
+  "type": "original procedural audio",
+  "sample_rate": 44100,
+  "clips": {
+    "swing": {
+      "duration": 0.16,
+      "peak": 0.8200018311105686,
+      "sha256": "61585c957aee49f31c2d7f1602be2ae94bb23b77ac9fa5220da0993b67d71bb2"
+    },
+    "kick": {
+      "duration": 0.21,
+      "peak": 0.8200018311105686,
+      "sha256": "4a67329da24f253a421e40cd091fe6cca5a58e4a801873dc3bdfa554eff7a1dc"
+    },
+    "hit_light": {
+      "duration": 0.14,
+      "peak": 0.8200018311105686,
+      "sha256": "22f19400c17639a7e36194ad2e18b2c35503f7f6aca632e29c316f2f52468855"
+    },
+    "hit_medium": {
+      "duration": 0.22,
+      "peak": 0.8200018311105686,
+      "sha256": "c89a68398dc62c4e543e1fea697dba0c431799a9161c69d96820ff9b75258efa"
+    },
+    "hit_heavy": {
+      "duration": 0.34,
+      "peak": 0.8200018311105686,
+      "sha256": "6b07ac6296492ae41e58c40adf7df52f01c980e61e67991dfd4b046720564b3a"
+    },
+    "block": {
+      "duration": 0.15,
+      "peak": 0.8200018311105686,
+      "sha256": "3892845e242d83e2b48ca34bbdf081f30ff717d38c5ab22bdf6e2857168c13ca"
+    },
+    "metal": {
+      "duration": 0.3,
+      "peak": 0.8200018311105686,
+      "sha256": "8a8cfcb7fdecfcb3a8135e6ca535c8dd5fa4cf6756a23011cbdca352f7ba6eda"
+    },
+    "slash": {
+      "duration": 0.27,
+      "peak": 0.8200018311105686,
+      "sha256": "26ebc82ea86b47469872e8034242ccb1a1c10221620ee57aa7e7f5be61d0e4f6"
+    },
+    "sonic": {
+      "duration": 0.42,
+      "peak": 0.8200018311105686,
+      "sha256": "9ff6c215b556fe4a181dde09bf4778f68ac62b0624991ca4773783740983404b"
+    },
+    "shard": {
+      "duration": 0.27,
+      "peak": 0.8200018311105686,
+      "sha256": "8894450ee657195a1202b4174dd4b97d033bd3ec794aa20fdea29a387eb68b17"
+    },
+    "slime": {
+      "duration": 0.33,
+      "peak": 0.8200018311105686,
+      "sha256": "28e2fa30b33c87f8449f843650bec5487780098f6d988fe0bae92391959ce065"
+    },
+    "quake": {
+      "duration": 0.48,
+      "peak": 0.8200018311105686,
+      "sha256": "e89560c362831f9db2afccb530575b09c6339fca4f60ad6e0ebcc7699e067883"
+    },
+    "uppercut": {
+      "duration": 0.31,
+      "peak": 0.8200018311105686,
+      "sha256": "0c857b00be76ede78767892142251be5c71a4dbf1d000752e33e27bd7b12066f"
+    },
+    "counter": {
+      "duration": 0.36,
+      "peak": 0.8200018311105686,
+      "sha256": "bd79a85a82a7362b54c26241446080729ce358c375f23a445eb1f689479ffdae"
+    },
+    "ex": {
+      "duration": 0.38,
+      "peak": 0.8200018311105686,
+      "sha256": "8f225963fbbf90f13881901acd8dc5743c39d1459e6db90b5ce37c793e01d4e9"
+    },
+    "ca": {
+      "duration": 0.68,
+      "peak": 0.8200018311105686,
+      "sha256": "63d1b8c2259096148493530e148ed986eb0beba1207b8656fbc98ccb4d2129ad"
+    },
+    "land": {
+      "duration": 0.22,
+      "peak": 0.8200018311105686,
+      "sha256": "354e5cfdfb39cfa8c57a70a28d2d498bae6b11f9a030c50720cd69239f74ad5b"
+    },
+    "power": {
+      "duration": 0.44,
+      "peak": 0.8200018311105686,
+      "sha256": "fed139183d1591d4e4edc71ab8946c489d24392e646c4028fb2570cc8239d803"
+    },
+    "throw": {
+      "duration": 0.36,
+      "peak": 0.8200018311105686,
+      "sha256": "d762630ed688ae6fd15038e16035d909aaea8970a56ea4b23e9170e86fcb4c0d"
+    }
+  }
+}

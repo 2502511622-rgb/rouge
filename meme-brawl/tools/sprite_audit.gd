@@ -7,6 +7,7 @@ const OUTPUT = "/tmp/meme-sprite-audit"
 class Gallery:
 	extends "res://scripts/fight_presentation.gd"
 	const Combatant = preload("res://scripts/fighter.gd")
+	var hit_pause := 0.0
 	var paused := false
 	var show_help := false
 	var kind := 0

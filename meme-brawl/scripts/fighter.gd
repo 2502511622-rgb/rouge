@@ -4,6 +4,16 @@ const R = preload("res://scripts/roster.gd")
 var arena: Node2D
 var kind := 0
 var side := 0
+var v_meter := 100.0
+var trigger_time := 0.0
+var charging := false
+var charge := 0.0
+var charge_bonus := 1.0
+var armor := 0.0
+var cancel_window := 0.0
+var low_profile := 0.0
+var slam_pending := false
+var slam_ex := false
 var hp := 900.0
 var meter := 0.0
 var facing := 1.0
@@ -51,8 +61,11 @@ func opponent() -> Node2D:
 func tick(dt: float, controlled: bool) -> void:
 	clock += dt
 	animation += dt
-	for key in ["stun", "cooldown", "active", "v_time", "v_cooldown", "horns", "invulnerable", "flash", "label_time"]:
+	for key in ["stun", "cooldown", "active", "v_time", "v_cooldown", "horns", "invulnerable", "flash", "label_time", "trigger_time", "armor", "cancel_window", "low_profile"]:
 		set(key, maxf(0.0, float(get(key)) - dt))
+	if charging and kind == 4:
+		charge = minf(2.5, charge + dt)
+	v_meter = minf(100, v_meter + dt * 3.0)
 	if active <= 0:
 		attack = {}
 	hit_interval -= dt
@@ -83,6 +96,9 @@ func tick(dt: float, controlled: bool) -> void:
 		velocity.y = 0
 		grounded = true
 		jumps = 0
+		if slam_pending:
+			slam_pending = false
+			begin_attack({"damage": 150 if slam_ex else 105, "range": 210, "height": 90, "low": true, "push": 300, "knockdown": slam_ex}, 0.2, 0.6)
 	if not attack.is_empty() and not connected:
 		var enemy = opponent()
 		var delta: Vector2 = enemy.position - position
@@ -107,14 +123,17 @@ func player_input(_dt: float) -> void:
 	crouching = down and grounded
 	blocking = x * facing < 0 and grounded
 	if not crouching:
-		velocity.x = x * R.SPEED[kind] * (1.45 if kind == 0 and v_time > 0 else 1.0)
+		velocity.x = x * R.SPEED[kind] * (1.45 if (kind == 0 and v_time > 0) or (kind == 3 and trigger_time > 0) else 1.0)
 
 func press(key: int) -> void:
 	if hp <= 0 or stun > 0: return
 	if key == KEY_W and (grounded or (kind == 0 and v_time > 0 and jumps < 2)) and active <= 0:
 		grounded = false
 		jumps += 1
-		velocity.y = -540
+		velocity.y = -660 if kind == 5 and trigger_time > 0 else -540
+		return
+	if key == KEY_B:
+		trigger()
 		return
 	if key == KEY_V:
 		v_skill()
@@ -140,13 +159,13 @@ func press(key: int) -> void:
 		else: last_heavy = clock
 	if ex and strength == 2 and clock - last_special_at < 0.28:
 		special(last_special_move, true)
-	elif matches([2, 3, 6, 2, 3, 6]) and not kick:
+	elif matches([2, 1, 4, 2, 1, 4] if kind == 4 else [2, 3, 6, 2, 3, 6]) and kick == (kind == 5):
 		super_move()
 	elif matches([6, 2, 3]) and kick == (kind == 0):
 		special(1, ex)
-	elif matches([2, 1, 4]) and (kick == (kind != 1) or (ex and kind == 2)):
+	elif matches([2, 1, 4]) and (kick == (kind in [0,2,3]) or (ex and kind == 2)):
 		special(2, ex)
-	elif matches([2, 3, 6]) and not kick:
+	elif matches([2, 3, 6]) and kick == (kind == 5):
 		special(0, ex)
 	else:
 		normal(strength, kick)
@@ -166,15 +185,20 @@ func say(text: String) -> void:
 
 func normal(strength: int, kick: bool) -> void:
 	if cooldown > 0 or active > 0: return
-	var low := crouching and kick
-	var damage: float = [38, 65, 95][strength] * (0.85 if kind == 2 else 1.0)
-	begin_attack({"damage": damage, "range": [88, 112, 145][strength] + (20 if kick else 0), "low": low, "air": not grounded, "push": 145 + strength * 65}, 0.16 + strength * 0.06, 0.23 + strength * 0.13)
+	var low := crouching and kick and not (kind == 5 and trigger_time > 0)
+	var damage: float = [38, 65, 95][strength] * (0.85 if kind == 2 else (1.25 if kind == 4 else 1.0))
+	begin_attack({"damage": damage, "range": [88, 112, 145][strength] + (20 if kick else 0), "low": low, "air": not grounded or (kind == 5 and trigger_time > 0 and kick), "push": 145 + strength * 65, "cancelable": true}, 0.16 + strength * 0.06, 0.23 + strength * 0.13)
 	meter = minf(3, meter + 0.025)
 
 func begin_attack(data: Dictionary, duration: float, recovery: float) -> void:
-	attack = data
+	attack = data.duplicate()
+	if trigger_time > 0 and kind == 5: attack.damage = float(attack.get("damage", 0)) * 1.2
+	if trigger_time > 0 and kind == 4: attack.range = float(attack.get("range", 95)) + 110
+	if kind == 4 and data.get("special", false):
+		attack.damage = float(attack.get("damage", 0)) * charge_bonus
+		charge_bonus = 1.0
 	active = duration
-	cooldown = recovery
+	cooldown = recovery * (0.65 if kind == 3 and trigger_time > 0 else 1.0)
 	connected = false
 	remaining_hits = 0
 	arena.sound(kind, "swing")
@@ -191,6 +215,10 @@ func special(move: int, use_ex: bool) -> void:
 	var empowered := use_ex or (kind == 0 and v_time > 0 and move != 0)
 	say(R.EX[kind][move] if use_ex else R.SPECIALS[kind][move])
 	motion.clear()
+	if kind >= 3:
+		dlc_special(move, use_ex)
+		arena.sound(kind, "special")
+		return
 	if move == 0 and kind != 1:
 		var count := 3 if empowered else 1
 		for n in range(count):
@@ -219,12 +247,68 @@ func special(move: int, use_ex: bool) -> void:
 		if empowered: invulnerable = 0.22
 	arena.sound(kind, "special")
 
+func dlc_special(move: int, empowered: bool) -> void:
+	if kind == 4:
+		charge_bonus = 1.0 + charge * 0.35
+		charging = false
+		charge = 0
+	if (kind == 3 and move == 0 and not empowered) or (kind == 5 and move == 2):
+		arena.spawn_projectile(self, 0, empowered)
+		active = 0.25
+		cooldown = 0.7
+		return
+	if kind == 3 and move == 2:
+		grounded = false
+		velocity = Vector2(facing * 250,-550)
+		slam_pending = true
+		slam_ex = empowered
+		cooldown = 0.65
+		return
+	var damage := 125.0 if kind == 4 else 95.0
+	var reach := 230.0 if kind == 5 else (280.0 if kind == 4 and move == 2 else 120.0)
+	var multi := empowered and ((kind == 3 and move < 2) or (kind == 4 and move == 2) or (kind == 5 and move == 0))
+	begin_attack({"damage": 62.0 if multi else damage * (1.45 if empowered else 1.0), "range":reach, "height":190 if move == 1 else 100, "low": kind == 4 and move == 2, "push":25 if multi else 340, "special":true, "cancelable":true, "knockdown":empowered and not multi},0.65 if multi else 0.35,1.0 if empowered else 0.65)
+	if multi:
+		remaining_hits = 2
+		hit_interval = 0.18
+	if (kind == 4 and move == 0) or (kind == 3 and move < 2) or (kind == 5 and (move == 0 or empowered)):
+		velocity.x = facing * (590 if empowered else 430)
+	if kind == 3 and (move == 1 or empowered): low_profile = 0.55
+	if empowered and ((kind == 4 and move == 0) or (kind == 5 and move == 1)): armor = 0.55
+	if move == 1 and kind in [4,5] and not empowered:
+		grounded = false
+		velocity.y = -410
+
 func v_skill() -> void:
+	if kind == 3:
+		if cancel_window > 0 and v_meter >= 35:
+			v_meter -= 35
+			active = 0
+			cooldown = 0
+			attack = {}
+			remaining_hits = 0
+			velocity.x = 0
+			cancel_window = 0
+			say("狂笑取消 · 哈哈哈哈！")
+			arena.sound(kind, "v")
+		return
+	if kind == 4:
+		if active > 0: return
+		charging = not charging
+		say("妈 ——（移动蓄力中）" if charging else "蓄力保留 · %.1f" % charge)
+		return
 	if v_cooldown > 0 or active > 0: return
 	v_time = 3.5 if kind == 0 else 1.0
 	v_cooldown = 7.0
 	say(R.V[kind])
 	arena.sound(kind, "v")
+
+func trigger() -> void:
+	if kind < 3 or trigger_time > 0 or v_meter < 100 or active > 0: return
+	v_meter = 0
+	trigger_time = 8.0
+	say(R.TRIGGERS[kind])
+	arena.sound(kind, "trigger")
 
 func super_move() -> void:
 	if meter < 3:
@@ -240,7 +324,14 @@ func super_move() -> void:
 	begin_attack({"damage": 55, "range": 1200 if kind != 1 else 450, "height": 600, "push": 25, "knockdown": false, "ca": true}, 0.85, 1.25)
 	remaining_hits = 5
 	hit_interval = 0.12
-	if kind == 1: velocity.x = facing * 680
+	if kind in [1,3]: velocity.x = facing * 680
+	if kind == 4:
+		attack.range = 170
+		attack["throw"] = true
+		attack.damage = 70
+	if kind == 5:
+		grounded = false
+		velocity.y = -300
 	arena.sound(kind, "ca")
 
 func throw_move() -> void:
@@ -250,12 +341,13 @@ func throw_move() -> void:
 
 func receive(data: Dictionary, source: Node2D) -> void:
 	if hp <= 0 or invulnerable > 0: return
+	if low_profile > 0 and data.get("projectile", false): return
 	var is_throw: bool = data.get("throw", false)
 	if is_throw and not grounded: return
-	if v_time > 0 and kind != 0 and not is_throw and not data.get("counter", false) and not (kind == 1 and data.get("low", false)):
+	if v_time > 0 and kind in [1,2,5] and not is_throw and not data.get("counter", false) and not (kind == 1 and data.get("low", false)):
 		v_time = 0
 		if kind == 2: horns = 3.0
-		say("盾反斩！" if kind == 1 else "磨平棱角 · 弹射反击！")
+		say("盾反斩！" if kind == 1 else ("肥嘟嘟格挡 · 反击！" if kind == 5 else "磨平棱角 · 弹射反击！"))
 		meter = minf(3, meter + 0.45)
 		source.receive({"damage": 170, "counter": true, "push": 420, "knockdown": true}, self)
 		return
@@ -264,15 +356,30 @@ func receive(data: Dictionary, source: Node2D) -> void:
 	if data.get("air", false) and crouching: guarded = false
 	var damage := float(data.get("damage", 50))
 	# Cyclic advantage: penguin > dog > cat > penguin. Readable, modest 8%.
-	if (source.kind + 1) % 3 == kind: damage *= 1.08
+	if source.kind < 3 and kind < 3 and (source.kind + 1) % 3 == kind: damage *= 1.08
 	if kind == 2 and horns > 0: damage *= 0.9
+	if (kind == 3 and trigger_time > 0) or charging: damage *= 1.25
+	if kind == 4 and charging:
+		charging = false
+		charge = 0
 	if guarded: damage *= 0.08
 	hp = maxf(0, hp - damage)
 	meter = minf(3, meter + (0.24 if kind == 2 else 0.12))
+	if not guarded:
+		v_meter = minf(100, v_meter + 12)
+		source.v_meter = minf(100, source.v_meter + 8)
+		if data.get("cancelable", false): source.cancel_window = 0.3
 	source.meter = minf(3, source.meter + (0.08 if guarded else 0.16))
 	stun = 0.12 if guarded else (0.6 if data.get("knockdown", false) else 0.27)
+	if armor > 0 and not is_throw:
+		stun = 0
+		flash = 0.12
+		arena.hit_effect(position + Vector2(0,-70), false, damage)
+		if hp <= 0: arena.finish(source.side)
+		return
 	active = 0
 	attack = {}
+	slam_pending = false
 	velocity.x = source.facing * float(data.get("push", 180)) * (0.35 if guarded else 1.0)
 	if data.get("knockdown", false) and not guarded:
 		velocity.y = -260
@@ -284,7 +391,10 @@ func receive(data: Dictionary, source: Node2D) -> void:
 		arena.finish(source.side)
 
 func ai_input(dt: float) -> void:
+	if kind == 3 and cancel_window > 0 and v_meter >= 35 and randf() < 0.08: v_skill()
 	if stun > 0 or active > 0: return
+	if kind >= 3 and v_meter >= 100: trigger()
+	if kind == 4 and not charging and charge <= 0 and randf() < 0.01: v_skill()
 	var dist := absf(opponent().position.x - position.x)
 	blocking = opponent().active > 0 and randf() < 0.78
 	crouching = blocking and opponent().crouching
@@ -316,7 +426,9 @@ func _draw() -> void:
 	if hp <= 0:
 		draw_set_transform(Vector2(0, -12), -facing * 1.35, Vector2(facing, 1))
 	var squish := 16.0 if crouching else 0.0
-	draw_set_transform(Vector2(0, squish + bob), 0, Vector2(facing, 1 - squish / 160))
+	var roll := animation * 18 if kind == 3 and low_profile > 0 and active > 0 else 0.0
+	var pivot := Vector2(0, squish + bob - 70) + Vector2(0,70).rotated(roll)
+	draw_set_transform(pivot, roll, Vector2(facing, 1 - squish / 160))
 	if v_time > 0:
 		draw_arc(Vector2(0, -66), 76, 0, TAU, 14, Color(color, 0.65), 4)
 	if kind == 0:
@@ -341,7 +453,7 @@ func _draw() -> void:
 		var extension := 52.0 if active > 0 else 0.0
 		poly([Vector2(31,-72),Vector2(64+extension,-118),Vector2(73+extension,-115),Vector2(46,-55)],Color("d6e0da"))
 		draw_line(Vector2(26,-75),Vector2(53,-54),Color("c89955"),7)
-	else:
+	elif kind == 2:
 		poly([Vector2(-45,-12),Vector2(-53,-61),Vector2(-35,-105),Vector2(-22,-123),Vector2(29,-119),Vector2(49,-87),Vector2(53,-22),Vector2(27,-7)], color.lightened(0.15))
 		poly([Vector2(-39,-75),Vector2(-15,-91),Vector2(35,-80),Vector2(40,-30),Vector2(14,-18),Vector2(-31,-25)],Color("d6d4d5"))
 		if horns <= 0:
@@ -355,6 +467,37 @@ func _draw() -> void:
 		draw_line(Vector2(1,-84),Vector2(11,-84),Color("766773"),3)
 		draw_rect(Rect2(-43,-12,30,12),Color("adaab5"))
 		draw_rect(Rect2(19,-12,30,12),Color("adaab5"))
+	else:
+		var body_width := 65.0 if kind == 4 else 56.0
+		poly([Vector2(-body_width,-15),Vector2(-body_width-5,-75),Vector2(-35,-122),Vector2(28,-128),Vector2(body_width,-80),Vector2(body_width,-18)],color)
+		draw_circle(Vector2(4,-57),42,Color("f2df87"))
+		for direction in [-1,1]:
+			draw_rect(Rect2(direction*42-12,-15,34,15),color.darkened(0.25))
+			draw_line(Vector2(direction*40,-80),Vector2(direction*64,-57),color.darkened(0.12),17)
+		if kind == 3:
+			for direction in [-1,1]:
+				draw_circle(Vector2(direction*27,-115),20,color)
+				draw_line(Vector2(direction*27-8,-115),Vector2(direction*27+8,-115),Color("484326"),4)
+			draw_arc(Vector2(0,-105),32,0.1,3.0,7,Color("463c22"),8)
+			for n in range(6): draw_rect(Rect2(-24+n*9,-92,5,7),Color("eee3ac"))
+		elif kind == 4:
+			for direction in [-1,1]:
+				poly([Vector2(direction*26,-120),Vector2(direction*61,-161),Vector2(direction*47,-111)],Color("b6a889"))
+				draw_circle(Vector2(direction*23,-108),5,Color("514631"))
+			draw_rect(Rect2(-31,-100,65,28),Color("b58b43"))
+			draw_circle(Vector2(-17,-88),5,Color("584b34"))
+			draw_circle(Vector2(19,-88),5,Color("584b34"))
+		else:
+			for direction in [-1,1]:
+				poly([Vector2(direction*17,-121),Vector2(direction*32,-164),Vector2(direction*44,-117)],color.darkened(0.12))
+				draw_line(Vector2(direction*10,-108),Vector2(direction*30,-114),Color("574324"),5)
+			draw_arc(Vector2(0,-104),22,0,2.5,5,Color("574324"),4)
+			poly([Vector2(-38,-29),Vector2(-91,-5),Vector2(-70,-39),Vector2(-48,-65)],color.darkened(0.18))
+			draw_rect(Rect2(-24,-58,49,30),Color("cf981f"))
+		if trigger_time > 0:
+			draw_arc(Vector2(0,-70),87,0,TAU,12,Color("ff7051"),5)
+		if charging:
+			draw_rect(Rect2(-40,-185,80*charge/2.5,6),Color("ffed82"))
 	# Deliberate coarse facets and misplaced pixels evoke broken AI geometry.
 	for n in range(8):
 		draw_rect(Rect2(-28 + (n*19)%56,-30-(n*31)%65,7+(n%3)*3,4),Color(0.1,0.12,0.16,0.18))

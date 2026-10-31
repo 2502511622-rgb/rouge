@@ -30,6 +30,9 @@ var active := 0.0
 var v_time := 0.0
 var v_cooldown := 0.0
 var horns := 0.0
+var guard_time := 0.0
+var counter_startup := 0.0
+var attack_startup := 0.0
 var invulnerable := 0.0
 var flash := 0.0
 var attack: Dictionary = {}
@@ -67,7 +70,7 @@ func opponent() -> Node2D:
 func tick(dt: float, controlled: bool) -> void:
 	clock += dt
 	animation += dt
-	for key in ["stun", "cooldown", "active", "v_time", "v_cooldown", "horns", "invulnerable", "flash", "label_time", "trigger_time", "armor", "cancel_window", "low_profile"]:
+	for key in ["stun", "cooldown", "active", "v_time", "v_cooldown", "horns", "invulnerable", "flash", "label_time", "trigger_time", "armor", "cancel_window", "low_profile", "guard_time", "counter_startup", "attack_startup"]:
 		set(key, maxf(0.0, float(get(key)) - dt))
 	if charging and kind == 4:
 		charge = minf(2.5, charge + dt)
@@ -89,6 +92,8 @@ func tick(dt: float, controlled: bool) -> void:
 		player_input(dt)
 	elif not arena.training:
 		ai_input(dt)
+	if guard_time > 0 and stun <= 0:
+		blocking = true
 	if stun > 0:
 		velocity.x = move_toward(velocity.x, 0, 650 * dt)
 	elif active <= 0:
@@ -105,7 +110,7 @@ func tick(dt: float, controlled: bool) -> void:
 		if slam_pending:
 			slam_pending = false
 			begin_attack({"damage": 150 if slam_ex else 105, "range": 210, "height": 90, "low": true, "push": 300, "knockdown": slam_ex}, 0.2, 0.6)
-	if not attack.is_empty() and not connected:
+	if not attack.is_empty() and not connected and attack_startup <= 0:
 		var enemy = opponent()
 		var delta: Vector2 = enemy.position - position
 		if delta.x * facing > -24 and absf(delta.x) < float(attack.get("range", 95)) and absf(delta.y) < float(attack.get("height", 100)):
@@ -125,7 +130,11 @@ func player_input(_dt: float) -> void:
 		last_dir = dir
 	while not motion.is_empty() and clock - float(motion[0][1]) > 0.85:
 		motion.pop_front()
-	if stun > 0 or active > 0: return
+	if stun > 0: return
+	if active > 0:
+		if kind == 0 and not grounded and attack.get("air",false):
+			velocity.x = move_toward(velocity.x,x*R.SPEED[0],1800*_dt)
+		return
 	crouching = down and grounded
 	blocking = x * facing < 0 and grounded
 	if not crouching:
@@ -194,7 +203,7 @@ func normal(strength: int, kick: bool) -> void:
 	if cooldown > 0 or active > 0: return
 	var low := crouching and kick and not (kind == 5 and trigger_time > 0)
 	var damage: float = [38, 65, 95][strength] * (0.85 if kind == 2 else (1.25 if kind == 4 else 1.0))
-	begin_attack({"damage": damage, "range": [88, 112, 145][strength] + (20 if kick else 0), "low": low, "air": not grounded or (kind == 5 and trigger_time > 0 and kick), "push": 145 + strength * 65, "cancelable": true}, 0.16 + strength * 0.06, 0.23 + strength * 0.13)
+	begin_attack({"damage": damage, "range": [88, 112, 145][strength] + (20 if kick else 0), "low": low, "air": not grounded or (kind == 5 and trigger_time > 0 and kick), "push": 145 + strength * 65, "cancelable": true, "startup": 0.09 + strength*0.035 if kind == 2 else 0.0}, 0.16 + strength * 0.06, 0.23 + strength * 0.13)
 	visual.play(("kick_" if kick else "punch_")+str(strength),cooldown)
 	meter = minf(3, meter + 0.025)
 
@@ -205,8 +214,9 @@ func begin_attack(data: Dictionary, duration: float, recovery: float) -> void:
 	if kind == 4 and data.get("special", false):
 		attack.damage = float(attack.get("damage", 0)) * charge_bonus
 		charge_bonus = 1.0
-	active = duration
-	cooldown = recovery * (0.65 if kind == 3 and trigger_time > 0 else 1.0)
+	attack_startup = float(data.get("startup",0))
+	active = duration + attack_startup
+	cooldown = (recovery + attack_startup) * (0.65 if kind == 3 and trigger_time > 0 else 1.0)
 	connected = false
 	remaining_hits = 0
 	arena.sound(kind, "swing")
@@ -224,6 +234,14 @@ func special(move: int, use_ex: bool) -> void:
 	say(R.EX[kind][move] if use_ex else R.SPECIALS[kind][move])
 	visual.play(("ex_" if use_ex else "special_")+str(move),0.85 if use_ex else 0.65)
 	motion.clear()
+	if kind == 0:
+		penguin_special(move, empowered)
+		arena.sound(kind,"special")
+		return
+	if kind == 2:
+		cat_special(move, use_ex)
+		arena.sound(kind,"special")
+		return
 	if kind >= 3:
 		dlc_special(move, use_ex)
 		arena.sound(kind, "special")
@@ -255,6 +273,49 @@ func special(move: int, use_ex: bool) -> void:
 			velocity.y = -430
 		if empowered: invulnerable = 0.22
 	arena.sound(kind, "special")
+
+func penguin_special(move: int, empowered: bool) -> void:
+	if move == 0:
+		for n in range(3 if empowered else 1):
+			arena.spawn_projectile(self,n*55,empowered)
+		active = 0.22
+		cooldown = 0.65
+	elif move == 1:
+		begin_attack({"damage":145 if empowered else 85,"range":125,"height":145,"push":400,"knockdown":empowered},0.45,0.72)
+		low_profile = 0.38 if empowered else 0.22
+		velocity.x = facing*(710 if empowered else 450)
+		if empowered and not grounded: velocity.y = 330
+	else:
+		begin_attack({"damage":48,"range":145,"height":160,"air":true,"push":25},0.4,0.64)
+		remaining_hits = 2 if empowered else 1
+		hit_interval = 0.12
+		if grounded:
+			grounded = false
+			jumps = 1
+			velocity.y = -320
+		velocity.x = facing*(290 if empowered else 210)
+
+func cat_special(move: int, empowered: bool) -> void:
+	if move == 0:
+		var blunt := horns > 0
+		for n in range(3 if empowered else 1):
+			arena.spawn_projectile(self,n*55,empowered)
+		horns = maxf(horns,2.6)
+		active = 0.34
+		cooldown = 0.8
+		if blunt: say("磨平 · 钝角气团" if not empowered else "EX · 钝角碎片")
+	elif move == 1 or empowered:
+		v_time = 1.55 if empowered else 0.8
+		counter_startup = 0.08 if empowered else 0.18
+		active = counter_startup
+		cooldown = 0.75 if empowered else 0.65
+	else:
+		guard_time = 0.5
+		active = 0.3
+		cooldown = 0.6
+		velocity.x = -facing*235
+		# Guarding backstep is deliberately distinct from the V counter.
+		v_time = 0
 
 func dlc_special(move: int, empowered: bool) -> void:
 	if kind == 4:
@@ -355,15 +416,18 @@ func throw_move() -> void:
 
 func receive(data: Dictionary, source: Node2D) -> void:
 	if hp <= 0 or invulnerable > 0: return
-	if low_profile > 0 and data.get("projectile", false): return
+	if low_profile > 0 and data.get("projectile", false) and not data.get("low",false): return
 	var is_throw: bool = data.get("throw", false)
 	if is_throw and not grounded: return
-	if v_time > 0 and kind in [1,2,5] and not is_throw and not data.get("counter", false) and not (kind == 1 and data.get("low", false)):
+	if v_time > 0 and counter_startup <= 0 and kind in [1,2,5] and not is_throw and not data.get("counter", false) and not (kind == 1 and data.get("low", false)):
+		var blunt_counter := kind == 2 and horns > 0
 		v_time = 0
+		counter_startup = 0
 		if kind == 2: horns = 3.0
 		say("盾反斩！" if kind == 1 else ("肥嘟嘟格挡 · 反击！" if kind == 5 else "磨平棱角 · 弹射反击！"))
-		meter = minf(3, meter + 0.45)
-		source.receive({"damage": 170, "counter": true, "push": 420, "knockdown": true}, self)
+		visual.play("v",0.65)
+		meter = minf(3, meter + (0.65 if blunt_counter else 0.45))
+		source.receive({"damage": 120 if blunt_counter else 170, "counter": true, "push": 420, "knockdown": true}, self)
 		return
 	var guarded := blocking and grounded and not is_throw
 	if data.get("low", false) and not crouching: guarded = false
@@ -384,7 +448,7 @@ func receive(data: Dictionary, source: Node2D) -> void:
 		source.v_meter = minf(100, source.v_meter + 8)
 		if data.get("cancelable", false): source.cancel_window = 0.3
 	source.meter = minf(3, source.meter + (0.08 if guarded else 0.16))
-	stun = 0.12 if guarded else (0.6 if data.get("knockdown", false) else 0.27)
+	stun = 0.12 if guarded else float(data.get("hitstun",0.6 if data.get("knockdown", false) else 0.27))
 	if armor > 0 and not is_throw:
 		stun = 0
 		flash = 0.12
@@ -393,6 +457,10 @@ func receive(data: Dictionary, source: Node2D) -> void:
 		return
 	active = 0
 	attack = {}
+	if not guarded: guard_time = 0
+	if kind == 2:
+		v_time = 0
+		counter_startup = 0
 	slam_pending = false
 	velocity.x = source.facing * float(data.get("push", 180)) * (0.35 if guarded else 1.0)
 	if data.get("knockdown", false) and not guarded:

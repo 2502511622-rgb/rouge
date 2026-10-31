@@ -56,5 +56,71 @@
       "Feidudu: long ears, brown oval nose, white eyes, cream pouch belly",
       "Daodun: low round golden Shiba body with short paws and knife/shield"
     ]
+  },
+  "gugu_actions.png": {
+    "type": "original_ai_generated_pixel_art",
+    "layout": {
+      "columns": 4,
+      "rows": 4,
+      "width": 1254,
+      "height": 1254,
+      "uv_grid": "fractional cell boundaries with ten-pixel sampling guard"
+    },
+    "poses": [
+      "idle",
+      "walk_left",
+      "walk_right",
+      "crouch",
+      "jump_up",
+      "jump_down",
+      "jab",
+      "heavy_flipper",
+      "low_kick",
+      "high_kick",
+      "sonic_shout",
+      "belly_slide",
+      "air_spin",
+      "guard",
+      "hurt",
+      "ko"
+    ],
+    "design_choice": "Animal penguin interpretation retained from original user design. Administrator-hood fan version exists but is not automatically substituted.",
+    "reference_notes": [
+      "https://github.com/lmj798/gugugaga-penguin-pet",
+      "https://github.com/ChipenYip/gugu-gaga-penguin"
+    ],
+    "animation": "27 state clips use sixteen authored poses plus transform keys; not original video frames."
+  },
+  "cat_actions.png": {
+    "type": "original_ai_generated_pixel_art",
+    "layout": {
+      "columns": 4,
+      "rows": 4,
+      "width": 1254,
+      "height": 1254,
+      "uv_grid": "fractional cell boundaries with ten-pixel sampling guard"
+    },
+    "poses": [
+      "idle",
+      "walk_left",
+      "walk_right",
+      "crouch",
+      "hop",
+      "jab",
+      "slap",
+      "kick",
+      "chip_throw",
+      "counter_ready",
+      "counter_burst",
+      "hornless_idle",
+      "hornless_palm",
+      "guard",
+      "hurt",
+      "ko"
+    ],
+    "visual_reference": "https://github.com/KanadeK/miaocui-jiao-cat-codex-pet",
+    "reference_scope": "Round grey-white short-legged cat, large dark eyes; no source image or source sprites are copied into the game.",
+    "detachable_components": "Gold chip horns are separate rendered components and disappear on actual horn-loss state.",
+    "animation": "27 state clips use sixteen authored poses plus transform keys; not original video frames."
   }
 }

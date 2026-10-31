@@ -8,7 +8,7 @@ var projectiles: Array = []
 var effects: Array = []
 var screen := "select"
 var selected := 0
-var rival := 1
+var rival := 2
 var stage := 0
 var difficulty := 1.0
 var training := false
@@ -36,10 +36,14 @@ var sound_players: Array = []
 var smoke := false
 var voice_characters := 0
 var portrait_atlas: Texture2D
+var duo_atlases: Dictionary = {}
 
 func _ready() -> void:
 	if ResourceLoader.exists("res://assets/art/meme_fighters_atlas.png"):
 		portrait_atlas = load("res://assets/art/meme_fighters_atlas.png")
+	for kind in [0,2]:
+		var path: String = Fighter.PixelAnimator.DUO_PATHS[kind]
+		if ResourceLoader.exists(path): duo_atlases[kind] = load(path)
 	var audio_manifest = JSON.parse_string(FileAccess.get_file_as_string("res://assets/audio/sources.json"))
 	if audio_manifest is Dictionary:
 		for character in R.AUDIO:
@@ -232,30 +236,46 @@ func resolve_overlap() -> void:
 		b.position.x = clampf(b.position.x+push*sign_x,72,1080)
 
 func spawn_projectile(source: Node2D, offset: float, empowered: bool) -> void:
-	projectiles.append({"position":source.position+Vector2(source.facing*(52-offset),-75),"velocity":Vector2(source.facing*(310 if source.kind == 0 else 380),0),"owner":source.side,"kind":source.kind,"life":3.5,"ex":empowered,"trap":false,"bounced":false})
+	var flat: bool = source.kind == 2 and source.horns > 0
+	projectiles.append({"position":source.position+Vector2(source.facing*52,-75),"velocity":Vector2(source.facing*(270 if source.kind == 0 else 340),0),"owner":source.side,"kind":source.kind,"life":3.5,"ex":empowered,"trap":false,"bounced":false,"delay":offset/55.0*0.12,"age":0.0,"flat":flat,"damage":32 if flat else (80 if empowered else 65)})
+
+func settle_trap(p: Dictionary) -> void:
+	p.trap = true
+	p.position.y = 516
+	p.velocity = Vector2.ZERO
+	p.life = 2.6
+	p.damage = 12 if p.flat else 24
 
 func tick_projectiles(dt: float) -> void:
 	for p in projectiles:
+		if p.delay > 0:
+			p.delay = maxf(0,p.delay-dt)
+			continue
 		p.life -= dt
+		p.age += dt
 		if p.kind == 5:
 			p.velocity.y += 500*dt
+		elif p.kind == 2 and p.ex and not p.trap:
+			p.velocity.y += 360*dt
 		p.position += p.velocity*dt
+		if p.kind == 2 and p.ex and not p.trap and p.position.y >= 510:
+			settle_trap(p)
 		if p.kind == 5 and p.position.y >= 515 and not p.bounced:
 			p.position.y = 515
 			p.velocity.y = -250
 			p.bounced = true
 		var target = fighters[1-int(p.owner)]
-		if p.position.distance_to(target.position+Vector2(0,-65)) < (64 if not p.trap else 82):
-			target.receive({"damage":65 if not p.ex else 80,"push":150,"low":p.trap,"projectile":true},fighters[int(p.owner)])
+		var touches: bool = p.position.distance_to(target.position+Vector2(0,-65)) < 64
+		if p.trap:
+			touches = target.grounded and absf(target.position.x-p.position.x) < 38 and target.position.y > 490
+		if touches:
+			target.receive({"damage":p.damage,"push":65 if p.trap else 150,"low":p.trap,"projectile":true,"hitstun":0.42 if p.trap else (0.34 if p.kind == 2 else 0.27)},fighters[int(p.owner)])
 			if p.kind == 5 and not p.bounced:
 				p.position.y = 515
 				p.velocity.y = -250
 				p.bounced = true
 			elif p.kind == 2 and p.ex and not p.trap:
-				p.trap = true
-				p.position.y = 520
-				p.velocity = Vector2.ZERO
-				p.life = 2.0
+				settle_trap(p)
 			else: p.life = 0
 	projectiles = projectiles.filter(func(p): return p.life > 0 and p.position.x > -70 and p.position.x < 1220)
 
@@ -354,6 +374,7 @@ func _draw() -> void:
 	else:
 		draw_hud()
 		for p in projectiles:
+			if p.delay > 0: continue
 			var pos: Vector2 = p.position
 			var color: Color = R.COLORS[int(p.kind)]
 			if p.kind == 5:
@@ -366,7 +387,9 @@ func _draw() -> void:
 				draw_arc(pos,25,-1.4,1.4,8,color,7)
 				draw_arc(pos-Vector2(12,0),17,-1.4,1.4,6,color.lightened(0.4),4)
 			else:
-				draw_colored_polygon(PackedVector2Array([pos+Vector2(-18,15),pos+Vector2(0,-22),pos+Vector2(20,15)]),Color("f2b337"))
+				var triangle := PackedVector2Array([pos+Vector2(-18,15),pos+Vector2(0,-22 if not p.flat else -4),pos+Vector2(20,15)])
+				draw_colored_polygon(triangle,Color("d2a86d") if p.flat else Color("f2b337"))
+				if p.trap: draw_line(pos+Vector2(-23,7),pos+Vector2(23,7),Color("ffe6a0"),3)
 		for e in effects:
 			var pos: Vector2 = e.at
 			var color := Color("73bbff") if e.guard else Color("ffe2a2")
@@ -384,9 +407,11 @@ func _draw() -> void:
 			draw_rect(Rect2(0,180,1152,210),Color(0.05,0.02,0.1,0.88))
 			var cutin_path := "res://assets/art/meme_fighters_atlas.png"
 			if ResourceLoader.exists(cutin_path):
-				var atlas: Texture2D = portrait_atlas
-				var cell := Vector2(atlas.get_width()/6.0,atlas.get_height()/4.0)
-				draw_texture_rect_region(atlas,Rect2(28,158,250,250),Rect2(Vector2(ca_kind*cell.x,3*cell.y),cell).grow(-10))
+				var atlas: Texture2D = duo_atlases.get(ca_kind,portrait_atlas)
+				var columns := 4.0 if duo_atlases.has(ca_kind) else 6.0
+				var cell := Vector2(atlas.get_width()/columns,atlas.get_height()/4.0)
+				var origin := Vector2(2*cell.x,2*cell.y) if duo_atlases.has(ca_kind) else Vector2(ca_kind*cell.x,3*cell.y)
+				draw_texture_rect_region(atlas,Rect2(28,158,250,250),Rect2(origin,cell).grow(-10))
 			if ca_kind == 4:
 				draw_circle(Vector2(576,210),94,Color(1.0,0.85,0.25,0.22))
 				draw_colored_polygon(PackedVector2Array([Vector2(370,450),Vector2(480,230),Vector2(670,230),Vector2(780,450)]),Color(1.0,0.85,0.25,0.14))
@@ -406,7 +431,14 @@ func _draw() -> void:
 		draw_line(Vector2(0,y),Vector2(1152,y),Color(0,0,0,0.065))
 
 func draw_portrait(at: Vector2, kind: int) -> void:
-	var atlas_path := "res://assets/art/meme_fighters_atlas.png"
+	if duo_atlases.has(kind):
+		var duo: Texture2D = duo_atlases[kind]
+		var size := Vector2(duo.get_width()/4.0,duo.get_height()/4.0)
+		draw_texture_rect_region(duo,Rect2(at-Vector2(70,70),Vector2(140,140)),Rect2(Vector2.ZERO,size).grow(-10))
+		if kind == 2:
+			for side in [-1,1]:
+				draw_colored_polygon(PackedVector2Array([at+Vector2(side*10,-32),at+Vector2(side*33,-61),at+Vector2(side*31,-24)]),Color("ecb439"))
+		return
 	if portrait_atlas != null:
 		var atlas: Texture2D = portrait_atlas
 		var cell := Vector2(atlas.get_width()/6.0,atlas.get_height()/4.0)
@@ -482,6 +514,10 @@ func draw_hud() -> void:
 		draw_rect(Rect2(x if side == 0 else x+455*(1-ratio),46,455*ratio,25),R.COLORS[f.kind])
 		text(Vector2(x,96),"%d / %d" % [ceili(f.hp),R.HP[f.kind]],14,Color("bfc7c9"))
 		text(Vector2(x+165,96),("V %d  B %s" % [int(f.v_meter),"就绪" if f.v_meter >= 100 else "蓄能"]) if f.kind >= 3 else ("V  就绪" if f.v_cooldown <= 0 else "V  %.1fs" % f.v_cooldown),14,Color("a3b6bb"))
+		if f.kind == 0 and f.v_time > 0:
+			text(Vector2(x+300,96),"迁徙 %.1fs · %d/2跳" % [f.v_time,f.jumps],12,R.COLORS[0])
+		if f.kind == 2:
+			text(Vector2(x+300,96),"棱角再生 %.1fs" % f.horns if f.horns > 0 else "脆角就绪",12,R.COLORS[2])
 		for m in range(3):
 			draw_rect(Rect2(x+m*155,587,145,17),Color("26323e"))
 			draw_rect(Rect2(x+m*155,587,145*clampf(f.meter-m,0,1),17),Color("e5b85d") if f.meter >= 3 else R.COLORS[f.kind])
@@ -619,6 +655,114 @@ func run_dlc_checks() -> void:
 	assert(opponents.size() == 5)
 	print("DLC PASS: 36 matchup dialogues / endings / five-opponent arcade progression")
 
+func run_duo_checks() -> void:
+	selected = 0
+	rival = 1
+	start_match(true,false)
+	intro_time = 0
+	var a = fighters[0]
+	var b = fighters[1]
+	a.v_skill()
+	var resource_before: float = a.meter
+	a.special(1,false)
+	assert(a.meter == resource_before and a.attack.damage == 145,"Migration enhances dash without EX meter cost")
+	var before: float = a.hp
+	a.receive({"damage":50,"projectile":true},b)
+	assert(a.hp == before,"Penguin slide phases high projectiles")
+	a.receive({"damage":50,"projectile":true,"low":true},b)
+	assert(a.hp < before,"Low projectile still catches slide")
+	a.stun = 0
+	a.active = 0
+	a.cooldown = 0
+	a.v_time = 0
+	a.grounded = false
+	a.special(1,true)
+	assert(a.velocity.y == 330 and a.attack.knockdown,"Air EX dive descends and knocks down")
+	a.active = 0
+	a.cooldown = 0
+	a.special(2,false)
+	assert(a.attack.air and a.remaining_hits == 1,"Air spin is a two-hit aerial attack")
+	var turn := InputEventKey.new()
+	turn.keycode = KEY_A
+	turn.physical_keycode = KEY_A
+	turn.pressed = true
+	Input.parse_input_event(turn)
+	Input.flush_buffered_events()
+	a.player_input(0.2)
+	var release := turn.duplicate()
+	release.pressed = false
+	Input.parse_input_event(release)
+	Input.flush_buffered_events()
+	assert(a.velocity.x < 0,"Real directional input can reverse aerial spin movement")
+	projectiles.clear()
+	spawn_projectile(a,55,true)
+	projectiles[0].position = b.position+Vector2(0,-65)
+	before = b.hp
+	tick_projectiles(0.06)
+	assert(b.hp == before,"Delayed migration wave cannot hit before activation")
+	tick_projectiles(0.07)
+	tick_projectiles(0)
+	assert(b.hp < before,"Delayed wave activates and hits")
+	print("DUO PASS: penguin migration / high-shot phase / low-shot vulnerability / air dive / spin / wave timing")
+	selected = 2
+	rival = 1
+	start_match(true,false)
+	intro_time = 0
+	a = fighters[0]
+	b = fighters[1]
+	a.special(0,false)
+	assert(a.horns > 0 and not projectiles[0].flat,"First chip shot removes horns")
+	a.active = 0
+	a.cooldown = 0
+	a.special(0,false)
+	assert(projectiles[-1].flat and projectiles[-1].damage < projectiles[0].damage,"Hornless shot has different damage and visual shape")
+	a.horns = 0.01
+	a.tick(0.02,false)
+	assert(a.horns == 0,"Horns regenerate on timer")
+	a.active = 0
+	a.cooldown = 0
+	a.special(2,false)
+	a.tick(0.016,false)
+	assert(a.guard_time > 0 and a.v_time == 0,"Backstep guards without arming a counter")
+	before = a.hp
+	var enemy_before: float = b.hp
+	a.receive({"damage":100},b)
+	assert(a.hp < before and before-a.hp < 10 and b.hp == enemy_before,"Backstep blocks instead of auto countering")
+	a.active = 0
+	a.cooldown = 0
+	a.stun = 0
+	a.guard_time = 0
+	a.blocking = false
+	a.special(1,false)
+	before = a.hp
+	a.receive({"damage":30},b)
+	assert(a.hp < before and a.v_time == 0,"Slow counter can be interrupted during startup")
+	a.stun = 0
+	a.active = 0
+	a.v_cooldown = 0
+	a.v_skill()
+	before = a.hp
+	a.receive({"damage":30},b)
+	assert(a.hp == before and a.horns > 0,"V counter succeeds and visibly removes chip horns")
+	projectiles.clear()
+	a.horns = 0
+	spawn_projectile(a,0,true)
+	projectiles[0].position = Vector2(650,515)
+	b.position = Vector2(900,532)
+	tick_projectiles(0.02)
+	assert(projectiles.size() == 1 and projectiles[0].trap,"Missed EX chip settles into a real ground trap")
+	b.position = Vector2(650,440)
+	b.grounded = false
+	before = b.hp
+	tick_projectiles(0)
+	assert(b.hp == before,"Jumping avoids ground shards")
+	b.position.y = 532
+	b.grounded = true
+	b.invulnerable = 0
+	tick_projectiles(0)
+	assert(b.hp < before and b.stun >= 0.4 and projectiles.is_empty(),"Stepping on shards trips once and consumes trap")
+	print("DUO PASS: cat horn loss / blunt shot / regeneration / guarded retreat / counter startup / EX ground traps / jump avoidance")
+
 func run_smoke() -> void:
 	# Exercise real combat rules, not only parsing or scene existence.
 	for kind in range(R.NAMES.size()):
@@ -634,6 +778,9 @@ func run_smoke() -> void:
 		var before: float = b.hp
 		a.normal(1,false)
 		a.tick(0.016,false)
+		if kind == 2:
+			assert(b.hp == before,"Cat normal has a real windup")
+			a.tick(0.15,false)
 		assert(b.hp < before,"Normal attack must deal damage")
 		a.cooldown = 0
 		a.active = 0
@@ -691,14 +838,22 @@ func run_smoke() -> void:
 		assert(fighters[0].hp < R.HP[selected] or fighters[1].hp < R.HP[rival],"AI must engage")
 		print("SIMULATION PASS: ",R.NAMES[kind]," vs ",R.NAMES[rival])
 	run_dlc_checks()
+	run_duo_checks()
 	for character in range(R.NAMES.size()):
 		selected = character
 		start_match(true,false)
 		var visual = fighters[0].visual
 		assert(visual.texture != null,"Pixel art atlas must be imported")
-		assert(visual.texture.get_width() % 6 == 0 and visual.texture.get_height() % 4 == 0)
-		for clip in visual.CLIPS:
-			assert(visual.CLIPS[clip].size() >= 4,"Every state has a frame sequence")
+		if character in [0,2]:
+			assert(visual.dedicated,"Duo characters must load their dedicated action sheets")
+			assert(visual.texture.get_width() == visual.texture.get_height() and visual.texture.get_width() >= 512)
+		else:
+			assert(visual.texture.get_width() % 6 == 0 and visual.texture.get_height() % 4 == 0)
+		var library: Dictionary = (visual.PENGUIN_CLIPS if character == 0 else visual.CAT_CLIPS) if visual.dedicated else visual.CLIPS
+		for clip in library:
+			assert(library[clip].size() >= 4,"Every state has a frame sequence")
+			for pose in library[clip]:
+				assert(pose >= 0 and pose < (16 if visual.dedicated else 4),"Pose index fits the imported atlas")
 			fighters[0].velocity = Vector2(100,0) if clip == "walk" else Vector2.ZERO
 			fighters[0].grounded = clip != "jump"
 			fighters[0].crouching = clip == "crouch"

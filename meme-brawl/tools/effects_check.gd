@@ -21,6 +21,7 @@ func run() -> void:
 		actor.position.x = 475
 		for move in range(3):
 			for ex in [false,true]:
+				actor.active = 0
 				actor.cooldown = 0
 				actor.meter = 3
 				actor.special(move,ex)
@@ -30,6 +31,7 @@ func run() -> void:
 					assert(motion.offset.is_finite() and motion.scale.is_finite())
 					assert(motion.offset.length() < 70 and motion.scale.x > 0 and motion.scale.y > 0)
 				arena.fx.clear()
+		actor.active = 0
 		actor.cooldown = 0
 		actor.meter = 3
 		actor.special(2 if kind in [1,4] else 0,true)

@@ -172,17 +172,24 @@ func draw_hud() -> void:
 		if arena.screen == "fight": draw_super(side,f,accent)
 		if arena.combo[side] > 1:
 			var cx := 42.0 if side == 0 else 900.0
-			label(Vector2(cx,230),"%02d" % arena.combo[side],62,accent,true)
+			label(Vector2(cx,230),"%02d" % arena.combo[side],62+int(arena.combo_pulse[side]*40),accent,true)
 			label(Vector2(cx+88,224),"HITS",22,Color.WHITE,true)
 			label(Vector2(cx+3,254),"DAMAGE  %d" % arena.combo_damage[side],14,GOLD,true)
+		if arena.cancel_notice_time[side] > 0:
+			label(Vector2(42 if side == 0 else 865,327),arena.cancel_notice[side],18,GOLD,true)
 		if arena.feedback_time[side] > 0:
 			var fx := 42.0 if side == 0 else 865.0
 			label(Vector2(fx,295),arena.feedback[side],19,accent,true)
 	cut_panel(Rect2(526,12,100,86),Color("392356"),15)
 	middle(76,"∞" if arena.training else "%02d" % ceili(arena.time_left),53,Color("ff927c") if arena.time_left <= 10 else Color.WHITE,not arena.training)
 	middle(115,"FINAL ROUND" if arena.round_wins == [1,1] else "ROUND %d" % arena.round_number,12,GOLD,true)
-	if arena.training: middle(151,"TRAINING / 1–3 必杀 · Shift EX · 4 CA / R 重置",13,Color("b8acd2"))
+	if arena.training: middle(151,"TRAINING / 1–3 必杀 · 4 CA · F4 连段提示 · F5 演练",13,Color("b8acd2"))
 	else: middle(151,R.STAGES[arena.stage],12,Color("aba2bc"))
+	if arena.training and arena.screen == "fight" and arena.combo_help and arena.intro_time <= 0 and arena.cinematic <= 0:
+		cut_panel(Rect2(336,194,480,82),Color(0.035,0.025,0.075,0.85),12)
+		middle(217,"HIT CONFIRM  →  CHAIN  →  SPECIAL CANCEL  →  SUPER CANCEL",12,GOLD,true)
+		middle(242,arena.combo_coach.ROUTES[arena.selected],15,Color("dcefff"))
+		middle(264,arena.combo_coach.status if arena.combo_coach.status != "" else "近身轻拳命中后接中拳、重拳；空挥无法取消。F5 查看真实连段。",12,Color("a8a1b9"))
 	if arena.screen == "result":
 		middle(640,"Enter 继续  ·  Esc 返回角色选择",12,Color("a99abc"))
 	else:

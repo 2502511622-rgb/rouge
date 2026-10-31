@@ -73,7 +73,7 @@ func _process(dt: float) -> void:
 	if fighter.arena.paused or fighter.arena.show_help or fighter.arena.hit_pause > 0: return
 	clock += dt
 	if locked and clock >= duration:
-		if state in ["ko","win"]:
+		if state in ["ko","win"] or (state == "ca" and fighter.action_type == "super" and fighter.active > 0):
 			clock = duration - 0.001
 		else: locked = false
 	if not locked:
@@ -131,11 +131,25 @@ func _draw() -> void:
 	elif state in ["v","trigger","charge","taunt","win"]:
 		offset.y = -absf(beat)*8
 		angle = beat*0.08
+	if state.begins_with("punch_") or state.begins_with("kick_"):
+		var motion: Dictionary = Motion.normal_sample(int(state.right(1)),state.begins_with("kick_"),t)
+		offset = motion.offset
+		angle = motion.angle
+		scale_pose = motion.scale
 	if state.begins_with("special_") or state.begins_with("ex_"):
 		var motion: Dictionary = Motion.sample(fighter.kind,int(state.right(1)),state.begins_with("ex_"),t)
 		offset = motion.offset
 		angle = motion.angle
 		scale_pose = motion.scale
+	if state == "ca" and fighter.action_type == "super":
+		var phase := clampf(1-fighter.active/0.85,0,1)
+		var motion: Dictionary = Motion.ca_sample(fighter.kind,phase)
+		offset = motion.offset
+		angle = motion.angle
+		scale_pose = motion.scale
+		if fighter.kind == 0: row = 10
+		elif fighter.kind == 2: row = 10 if phase > 0.72 else 9
+		else: row = (2 if fighter.kind == 5 else 1) if int(phase*12)%2 == 0 else 3
 	if dedicated and state == "ko":
 		angle = 0
 		offset = Vector2(-10*minf(1,t*2),0)

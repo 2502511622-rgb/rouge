@@ -29,6 +29,8 @@ var elapsed := 0.0
 var shake := 0.0
 var hit_pause := 0.0
 var shake_strength := 0.0
+var combo_coach = preload("res://scripts/combo_coach.gd").new()
+var combo_help := true
 var fx: Node2D
 var combat_audio: Node
 var paused := false
@@ -36,6 +38,9 @@ var show_help := false
 var muted := false
 var combo := [0, 0]
 var combo_timer := [0.0, 0.0]
+var cancel_notice := ["", ""]
+var cancel_notice_time := [0.0,0.0]
+var combo_pulse := [0.0,0.0]
 var ui: CanvasLayer
 var panel: Control
 var music_phase := 0.0
@@ -62,6 +67,7 @@ var portrait_atlas: Texture2D
 var duo_atlases: Dictionary = {}
 
 func _ready() -> void:
+	combo_coach.arena = self
 	Frames.prewarm()
 	if ResourceLoader.exists("res://assets/art/meme_fighters_atlas.png"):
 		portrait_atlas = load("res://assets/art/meme_fighters_atlas.png")
@@ -199,10 +205,17 @@ func new_round() -> void:
 	projectiles.clear()
 	effects.clear()
 	fx.clear()
+	cinematic = 0
+	shake = 0
+	combo_coach.running = false
+	combo_coach.status = ""
 	hit_pause = 0
 	position = Vector2.ZERO
 	combo = [0,0]
 	combo_timer = [0.0,0.0]
+	cancel_notice = ["", ""]
+	cancel_notice_time = [0.0,0.0]
+	combo_pulse = [0.0,0.0]
 	combo_damage = [0,0]
 	feedback_time = [0.0,0.0]
 	result_time = 0
@@ -276,7 +289,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		if key == KEY_5: choose(4)
 		if key == KEY_6: choose(5)
 	elif screen == "fight" and not paused and not show_help and intro_time <= 0 and cinematic <= 0:
-		if training and key >= KEY_1 and key <= KEY_3:
+		if training and key == KEY_F4: combo_help = not combo_help
+		elif training and key == KEY_F5: combo_coach.start()
+		elif training and key >= KEY_1 and key <= KEY_3:
 			fighters[0].special(key-KEY_1,event.shift_pressed)
 		elif training and key == KEY_4: fighters[0].super_move()
 		elif training and key == KEY_R: new_round()
@@ -308,12 +323,12 @@ func _physics_process(dt: float) -> void:
 	position = Vector2(sin(elapsed*145),cos(elapsed*123))*shake_strength*(shake/0.16) if shake > 0 and screen == "fight" and not paused and not show_help else Vector2.ZERO
 	if screen == "fight" and not paused and not show_help:
 		if intro_time > 0:
-			intro_time -= dt
+			intro_time = maxf(0,intro_time-dt)
 		elif cinematic > 0:
-			cinematic -= dt
+			cinematic = maxf(0,cinematic-dt)
 		elif not frozen:
 			if not training: time_left = maxf(0,time_left-dt)
-			fighters[0].tick(dt,not demo_mode)
+			fighters[0].tick(dt,not demo_mode and not combo_coach.running)
 			if screen == "fight": fighters[1].tick(dt,false)
 			# Practice dummy stays neutral while receiving attacks.
 			if training:
@@ -322,10 +337,14 @@ func _physics_process(dt: float) -> void:
 			if screen == "fight":
 				resolve_overlap()
 				tick_projectiles(dt)
+				if training: combo_coach.tick(dt)
 				if time_left <= 0: finish(0 if fighters[0].hp/R.HP[selected] >= fighters[1].hp/R.HP[rival] else 1)
 	for i in range(2):
 		feedback_time[i] = maxf(0,float(feedback_time[i])-dt)
-		combo_timer[i] = maxf(0,float(combo_timer[i])-dt)
+		combo_pulse[i] = maxf(0,float(combo_pulse[i])-dt)
+		if cinematic <= 0 and not paused and not show_help: cancel_notice_time[i] = maxf(0,float(cancel_notice_time[i])-dt)
+		if cinematic <= 0 and not frozen and not paused and not show_help:
+			combo_timer[i] = maxf(0,float(combo_timer[i])-dt)
 		if combo_timer[i] <= 0: combo[i] = 0
 	for e in effects: e.life -= dt
 	effects = effects.filter(func(e): return e.life > 0)
@@ -343,7 +362,7 @@ func resolve_overlap() -> void:
 
 func spawn_projectile(source: Node2D, offset: float, empowered: bool) -> void:
 	var flat: bool = source.kind == 2 and source.horns > 0
-	projectiles.append({"position":source.position+Vector2(source.facing*52,-75),"velocity":Vector2(source.facing*(270 if source.kind == 0 else 340),0),"owner":source.side,"kind":source.kind,"life":3.5,"ex":empowered,"trap":false,"bounced":false,"delay":offset/55.0*0.12,"age":0.0,"flat":flat,"damage":32 if flat else (80 if empowered else 65)})
+	projectiles.append({"position":source.position+Vector2(source.facing*52,-75),"velocity":Vector2(source.facing*(270 if source.kind == 0 else 340),0),"owner":source.side,"kind":source.kind,"life":3.5,"ex":empowered,"trap":false,"bounced":false,"delay":offset/55.0*0.12,"age":0.0,"flat":flat,"serial":source.action_serial,"damage":32 if flat else (80 if empowered else 65)})
 
 func settle_trap(p: Dictionary) -> void:
 	p.trap = true
@@ -375,7 +394,7 @@ func tick_projectiles(dt: float) -> void:
 		if p.trap:
 			touches = target.grounded and absf(target.position.x-p.position.x) < 38 and target.position.y > 490
 		if touches:
-			target.receive({"damage":p.damage,"push":65 if p.trap else 150,"low":p.trap,"projectile":true,"hitstun":0.42 if p.trap else (0.34 if p.kind == 2 else 0.27)},fighters[int(p.owner)])
+			target.receive({"cancelable":true,"serial":p.serial,"special":true,"damage":p.damage,"push":65 if p.trap else 150,"low":p.trap,"projectile":true,"hitstun":0.42 if p.trap else 0.38},fighters[int(p.owner)])
 			if p.kind == 5 and not p.bounced:
 				p.position.y = 515
 				p.velocity.y = -250
@@ -391,15 +410,19 @@ func hit_effect(at: Vector2, guarded: bool, damage: float, attacker := -1, linke
 	if attacker < 0: return
 	var strength := int(data.get("strength",2 if damage >= 90 or data.get("ca",false) else (1 if damage >= 50 else 0)))
 	var source = fighters[attacker]
+	if data.get("finisher",false):
+		strength = 2
+		shake = 0.22
 	fx.impact(at,source.kind,guarded,strength,data,source.facing)
 	combat_audio.impact(source.kind,guarded,strength,data,fighters[1-attacker].kind == 1)
-	hit_pause = maxf(hit_pause,0.015 if guarded else (0.065 if strength == 2 else 0.035))
+	hit_pause = maxf(hit_pause,0.015 if guarded else (0.09 if data.get("finisher",false) else (0.065 if strength == 2 else 0.035)))
 	shake_strength = 1.5 if guarded else (6 if strength == 2 else 3)
 	if not guarded:
 		if not linked:
 			combo[attacker] = 0
 			combo_damage[attacker] = 0
 		combo[attacker] += 1
+		combo_pulse[attacker] = 0.16
 		combo_damage[attacker] += roundi(damage)
 		combo_timer[attacker] = 1.25
 	feedback[attacker] = "BLOCK" if guarded else note
@@ -640,7 +663,7 @@ func draw_help() -> void:
 	text(Vector2(67,478),"方向相对朝向 · 0.85 秒缓冲 · Shift+必杀 = EX（1 格）· CA 消耗 3 格",18)
 	text(Vector2(67,520),"原三角克制保留 +8%；新角色无额外属性克制。投技可破当身与霸体。",18)
 	text(Vector2(67,564),"奶蛙：触发时防御降低 / 牛来：蓄力受击清空 / 袋鼠：触发踢技为中段",18)
-	text(Vector2(67,602),"练习 1/2/3 必杀 · Shift+数字 EX · 4 CA · Enter 跳过 · F3 鉴赏",16,Color("9cabb8"))
+	text(Vector2(67,602),"连段 J→K→L→必杀→CA · 练习 F4 提示 / F5 连段演练 · F3 鉴赏",16,Color("9cabb8"))
 
 func run_dlc_checks() -> void:
 	# Frogs must earn a hit-confirm before spending their cancel resource.
@@ -654,7 +677,7 @@ func run_dlc_checks() -> void:
 	a.v_skill()
 	assert(a.v_meter == 100, "Whiff cannot V-cancel")
 	a.normal(1,false)
-	a.tick(0.016,false)
+	a.tick(0.08,false)
 	assert(a.cancel_window > 0)
 	a.v_skill()
 	assert(a.active == 0 and a.cooldown == 0 and a.v_meter < 66, "Hit-confirm cancel spends 35 V")
@@ -692,6 +715,7 @@ func run_dlc_checks() -> void:
 	a.receive({"damage":20,"throw":true},b)
 	assert(a.stun > 0, "Throw defeats armor")
 	a.active = 0
+	a.cooldown = 0
 	a.stun = 0
 	a.motion = [[2,0],[1,0.1],[4,0.2],[2,0.3],[1,0.4],[4,0.5]]
 	a.meter = 3
@@ -908,7 +932,7 @@ func run_presentation_checks() -> void:
 	b.stun = 0
 	b.receive({"damage":40},a)
 	b.receive({"damage":40},a)
-	assert(combo[0] == 2 and combo_damage[0] == 80,"True linked hits accumulate damage for the real attacker")
+	assert(combo[0] == 2 and combo_damage[0] == 77,"True linked hits accumulate scaled damage for the real attacker")
 	b.stun = 0
 	b.receive({"damage":40},a)
 	assert(combo[0] == 1 and combo_damage[0] == 40,"A recovered opponent starts a new combo")
@@ -985,9 +1009,8 @@ func run_smoke() -> void:
 		var before: float = b.hp
 		a.normal(1,false)
 		a.tick(0.016,false)
-		if kind == 2:
-			assert(b.hp == before,"Cat normal has a real windup")
-			a.tick(0.15,false)
+		assert(b.hp == before,"Normals have real anticipation before contact")
+		a.tick(0.15,false)
 		assert(b.hp < before,"Normal attack must deal damage")
 		a.cooldown = 0
 		a.active = 0
@@ -995,6 +1018,7 @@ func run_smoke() -> void:
 		assert(a.meter < 3,"EX spends meter")
 		assert(a.label.begins_with("EX"))
 		a.active = 0
+		a.cooldown = 0
 		a.meter = 3
 		a.super_move()
 		assert(a.meter == 0 and cinematic > 0,"CA spends 3 and starts cinematic")

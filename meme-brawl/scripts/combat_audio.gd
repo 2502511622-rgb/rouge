@@ -36,6 +36,10 @@ func skill(kind: int, move: int, ex: bool) -> void:
 	if ex: play_clip("ex",1,true)
 
 func impact(kind: int, guarded: bool, strength: int, data: Dictionary, shield := false) -> void:
+	if data.get("finisher",false) and not guarded:
+		play_clip("ca",2,true)
+		play_clip("hit_heavy",2)
+		return
 	if guarded:
 		play_clip("metal" if shield else "block",0)
 	elif data.get("counter",false): play_clip("counter",2)

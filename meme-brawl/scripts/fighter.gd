@@ -14,6 +14,13 @@ var charge := 0.0
 var charge_bonus := 1.0
 var armor := 0.0
 var cancel_window := 0.0
+var action_type := "idle"
+var action_rank := -1
+var action_serial := 0
+var confirmed_serial := -1
+var buffered: Dictionary = {}
+var buffer_time := 0.0
+var juggle_count := 0
 var low_profile := 0.0
 var slam_pending := false
 var slam_ex := false
@@ -70,8 +77,9 @@ func opponent() -> Node2D:
 func tick(dt: float, controlled: bool) -> void:
 	clock += dt
 	animation += dt
-	for key in ["stun", "cooldown", "active", "v_time", "v_cooldown", "horns", "invulnerable", "flash", "label_time", "trigger_time", "armor", "cancel_window", "low_profile", "guard_time", "counter_startup", "attack_startup"]:
+	for key in ["stun", "cooldown", "active", "v_time", "v_cooldown", "horns", "invulnerable", "flash", "label_time", "trigger_time", "armor", "cancel_window", "low_profile", "guard_time", "counter_startup", "attack_startup", "buffer_time"]:
 		set(key, maxf(0.0, float(get(key)) - dt))
+	consume_buffer()
 	if charging and kind == 4:
 		charge = minf(2.5, charge + dt)
 	v_meter = minf(100, v_meter + dt * 3.0)
@@ -84,6 +92,14 @@ func tick(dt: float, controlled: bool) -> void:
 		hit_interval = 0.12
 		attack.push = 600 if remaining_hits == 0 else 25
 		attack.knockdown = remaining_hits == 0
+		attack["finisher"] = remaining_hits == 0
+		if remaining_hits == 0 and attack.get("ca",false): attack.damage = float(attack.damage)*1.5
+		if attack.get("special",false) and kind in [3,5]:
+			velocity.x = facing*(540 if kind == 3 else 420)
+			if kind == 5 or (kind == 3 and last_special_move == 1):
+				grounded = false
+				velocity.y = -160
+		arena.fx.follow_strike(self)
 	if grounded and active <= 0 and stun <= 0:
 		facing = 1 if opponent().position.x > position.x else -1
 	blocking = false
@@ -109,6 +125,7 @@ func tick(dt: float, controlled: bool) -> void:
 			arena.fx.emit("land",position-Vector2(0,50),kind,0.32,facing,slam_pending)
 			arena.combat_audio.play_clip("quake" if slam_pending else "land",1,true)
 		grounded = true
+		juggle_count = 0
 		jumps = 0
 		if slam_pending:
 			slam_pending = false
@@ -202,18 +219,73 @@ func say(text: String) -> void:
 	label_time = 1.5
 	arena.announce(text, R.COLORS[kind])
 
+func can_cancel(target: String, strength := -1) -> bool:
+	if hp <= 0 or stun > 0 or cancel_window <= 0 or confirmed_serial != action_serial: return false
+	if opponent().stun <= 0: return false
+	if target == "normal": return action_type == "normal" and strength > action_rank
+	if target == "special": return action_type == "normal"
+	if target == "super": return action_type in ["normal","special"]
+	return false
+
+func queue_action(type: String, value := 0, option := false) -> void:
+	# A short leniency window, never a stored sequence or an automatic combo.
+	buffered = {"type":type,"value":value,"option":option}
+	buffer_time = 0.14
+
+func consume_buffer() -> void:
+	if buffer_time <= 0:
+		buffered.clear()
+		return
+	if buffered.is_empty() or stun > 0: return
+	var type: String = buffered.type
+	if (cooldown > 0 or active > 0) and not can_cancel(type,int(buffered.value)): return
+	var command := buffered.duplicate()
+	buffered.clear()
+	if type == "normal": normal(command.value,command.option)
+	elif type == "special": special(command.value,command.option)
+	elif type == "super": super_move()
+
+func cancel_into(type: String) -> void:
+	var title := "CHAIN" if type == "normal" else ("SUPER CANCEL" if type == "super" else "SPECIAL CANCEL")
+	arena.cancel_notice[side] = title
+	arena.cancel_notice_time[side] = 1.1
+	arena.fx.emit("cancel",position+Vector2(0,-70),kind,0.32,facing,type == "super")
+	arena.combat_audio.play_clip("counter",0,true)
+	active = 0
+	cooldown = 0
+	remaining_hits = 0
+	attack = {}
+	velocity.x *= 0.25
+
+func start_action(type: String, rank := -1) -> void:
+	action_type = type
+	action_rank = rank
+	action_serial += 1
+	cancel_window = 0
+	confirmed_serial = -1
+	buffered.clear()
+
 func normal(strength: int, kick: bool) -> void:
-	if cooldown > 0 or active > 0: return
+	if hp <= 0 or stun > 0: return
+	if cooldown > 0 or active > 0:
+		if can_cancel("normal",strength): cancel_into("normal")
+		else:
+			queue_action("normal",strength,kick)
+			return
+	start_action("normal",strength)
 	var low := crouching and kick and not (kind == 5 and trigger_time > 0)
 	var damage: float = [38, 65, 95][strength] * (0.85 if kind == 2 else (1.25 if kind == 4 else 1.0))
-	begin_attack({"strength": strength, "kick": kick, "damage": damage, "range": [88, 112, 145][strength] + (20 if kick else 0), "low": low, "air": not grounded or (kind == 5 and trigger_time > 0 and kick), "push": 145 + strength * 65, "cancelable": true, "startup": 0.09 + strength*0.035 if kind == 2 else 0.0}, 0.16 + strength * 0.06, 0.23 + strength * 0.13)
+	begin_attack({"strength": strength, "kick": kick, "damage": damage, "range": [88, 112, 145][strength] + (20 if kick else 0), "low": low, "air": not grounded or (kind == 5 and trigger_time > 0 and kick), "push": 45 + strength * 25, "hitstun": [0.27,0.34,0.42][strength], "cancelable": true, "startup": 0.09 + strength*0.035 if kind == 2 else [0.045,0.065,0.085][strength]}, 0.16 + strength * 0.06, 0.23 + strength * 0.13)
 	visual.play(("kick_" if kick else "punch_")+str(strength),cooldown)
 	arena.combat_audio.play_clip("kick" if kick else "swing",strength)
-	arena.fx.emit("kick" if kick else "slash",position+Vector2(facing*35,-75),kind,0.22,facing,strength == 2)
+	arena.fx.emit("kick" if kick else ("slash" if kind == 1 else "fist"),position+Vector2(facing*35,-75),kind,0.22,facing,strength == 2)
 	meter = minf(3, meter + 0.025)
 
 func begin_attack(data: Dictionary, duration: float, recovery: float) -> void:
 	attack = data.duplicate()
+	attack["serial"] = action_serial
+	attack["cancelable"] = action_type in ["normal","special"] or data.get("cancelable",false)
+	if action_type == "special": attack["special"] = true
 	if trigger_time > 0 and kind == 5: attack.damage = float(attack.get("damage", 0)) * 1.2
 	if trigger_time > 0 and kind == 4: attack.range = float(attack.get("range", 95)) + 110
 	if kind == 4 and data.get("special", false):
@@ -226,11 +298,18 @@ func begin_attack(data: Dictionary, duration: float, recovery: float) -> void:
 	remaining_hits = 0
 
 func special(move: int, use_ex: bool) -> void:
-	# Double-heavy may upgrade the immediately preceding normal into an EX.
-	if cooldown > 0 and not use_ex: return
+	if hp <= 0 or stun > 0: return
+	var upgrade := use_ex and clock-last_special_at < 0.28 and action_type == "special" and move == last_special_move
+	if cooldown > 0 or active > 0:
+		if can_cancel("special"): pass
+		elif not upgrade:
+			if action_type == "normal": queue_action("special",move,use_ex)
+			return
 	if use_ex and meter < 1:
 		say("能量不足 · EX 需要 1 格")
 		return
+	if can_cancel("special"): cancel_into("special")
+	start_action("special")
 	if use_ex: meter -= 1
 	last_special_at = clock if not use_ex else -10.0
 	last_special_move = move
@@ -267,13 +346,21 @@ func special(move: int, use_ex: bool) -> void:
 		cooldown = 0.45
 	else:
 		var reach := 155.0 if move == 2 else 115.0
-		begin_attack({"damage": 155 if empowered else 105, "range": reach, "height": 180 if move == 1 else 100, "push": 360, "knockdown": empowered, "ex": empowered}, 0.38, 0.7)
+		begin_attack({"damage": 155 if empowered else 105, "range": reach, "height": 220 if move == 1 else 100, "launch": move == 1, "push": 180, "knockdown": empowered, "ex": empowered}, 0.38, 0.7)
 		if move == 0 or (kind == 0 and move == 1):
 			velocity.x = facing * (650 if empowered else 440)
 		if move == 1 and kind == 1:
 			grounded = false
 			velocity.y = -430
 		if empowered: invulnerable = 0.22
+		if empowered and move == 0:
+			attack.damage = 55
+			attack.push = 25
+			attack.knockdown = false
+			remaining_hits = 2
+			hit_interval = 0.16
+			active = 0.62
+			cooldown = 0.92
 
 func penguin_special(move: int, empowered: bool) -> void:
 	if move == 0:
@@ -338,7 +425,7 @@ func dlc_special(move: int, empowered: bool) -> void:
 	var damage := 125.0 if kind == 4 else 95.0
 	var reach := 230.0 if kind == 5 else (280.0 if kind == 4 and move == 2 else 120.0)
 	var multi := empowered and ((kind == 3 and move < 2) or (kind == 4 and move == 2) or (kind == 5 and move == 0))
-	begin_attack({"damage": 62.0 if multi else damage * (1.45 if empowered else 1.0), "range":reach, "height":190 if move == 1 else 100, "low": kind == 4 and move == 2, "push":25 if multi else 340, "special":true, "cancelable":true, "knockdown":empowered and not multi},0.65 if multi else 0.35,1.0 if empowered else 0.65)
+	begin_attack({"damage": 62.0 if multi else damage * (1.45 if empowered else 1.0), "range":reach, "height":220 if move == 1 else 100, "launch": move == 1 and kind in [4,5], "low": kind == 4 and move == 2, "push":25 if multi else 340, "special":true, "ex":empowered, "cancelable":true, "knockdown":empowered and not multi},0.65 if multi else 0.35,1.0 if empowered else 0.65)
 	if multi:
 		remaining_hits = 2
 		hit_interval = 0.18
@@ -388,7 +475,14 @@ func super_move() -> void:
 	if meter < 3:
 		say("CA 需要 3 格能量")
 		return
-	if active > 0: return
+	if hp <= 0 or stun > 0: return
+	if active > 0 or cooldown > 0:
+		if can_cancel("super"): cancel_into("super")
+		else:
+			queue_action("super")
+			return
+	elif can_cancel("super"): cancel_into("super")
+	start_action("super")
 	meter = 0
 	motion.clear()
 	say(R.CA[kind])
@@ -411,6 +505,7 @@ func super_move() -> void:
 
 func throw_move() -> void:
 	if cooldown > 0 or not grounded: return
+	start_action("throw")
 	say("投技")
 	visual.play("throw",0.7)
 	begin_attack({"damage": 125, "range": 85, "height": 70, "throw": true, "push": 430, "knockdown": true}, 0.15, 0.7)
@@ -423,6 +518,7 @@ func receive(data: Dictionary, source: Node2D) -> void:
 	if low_profile > 0 and data.get("projectile", false) and not data.get("low",false): return
 	var is_throw: bool = data.get("throw", false)
 	if is_throw and not grounded: return
+	if not grounded and stun > 0 and juggle_count >= 4 and not data.get("ca",false): return
 	if v_time > 0 and counter_startup <= 0 and kind in [1,2,5] and not is_throw and not data.get("counter", false) and not (kind == 1 and data.get("low", false)):
 		var blunt_counter := kind == 2 and horns > 0
 		v_time = 0
@@ -430,8 +526,12 @@ func receive(data: Dictionary, source: Node2D) -> void:
 		if kind == 2: horns = 3.0
 		say("盾反斩！" if kind == 1 else ("肥嘟嘟格挡 · 反击！" if kind == 5 else "磨平棱角 · 弹射反击！"))
 		visual.play("v",0.65)
+		start_action("special")
+		active = 0.2
+		cooldown = 0.4
+		attack = {}
 		meter = minf(3, meter + (0.65 if blunt_counter else 0.45))
-		source.receive({"damage": 120 if blunt_counter else 170, "counter": true, "push": 420, "knockdown": true}, self)
+		source.receive({"damage": 120 if blunt_counter else 170, "cancelable":true, "serial":action_serial, "counter": true, "push": 420, "knockdown": true}, self)
 		return
 	var guarded := blocking and grounded and not is_throw
 	if data.get("low", false) and not crouching: guarded = false
@@ -444,13 +544,17 @@ func receive(data: Dictionary, source: Node2D) -> void:
 	if kind == 4 and charging:
 		charging = false
 		charge = 0
+	if linked and not guarded:
+		damage *= maxf(0.5 if data.get("ca",false) else 0.35,1.0-int(arena.combo[source.side])*0.085)
 	if guarded: damage *= 0.08
 	hp = maxf(0, hp - damage)
 	meter = minf(3, meter + (0.24 if kind == 2 else 0.12))
 	if not guarded:
 		v_meter = minf(100, v_meter + 12)
 		source.v_meter = minf(100, source.v_meter + 8)
-		if data.get("cancelable", false): source.cancel_window = 0.3
+		if data.get("cancelable", false) and int(data.get("serial",-1)) == source.action_serial:
+			source.cancel_window = 0.3
+			source.confirmed_serial = source.action_serial
 	source.meter = minf(3, source.meter + (0.08 if guarded else 0.16))
 	stun = 0.12 if guarded else float(data.get("hitstun",0.6 if data.get("knockdown", false) else 0.27))
 	if armor > 0 and not is_throw:
@@ -467,9 +571,12 @@ func receive(data: Dictionary, source: Node2D) -> void:
 		counter_startup = 0
 	slam_pending = false
 	velocity.x = source.facing * float(data.get("push", 180)) * (0.35 if guarded else 1.0)
-	if data.get("knockdown", false) and not guarded:
-		velocity.y = -260
+	if not guarded and (data.get("launch",false) or data.get("knockdown",false)):
+		velocity.y = -370 if data.get("launch",false) else -260
 		grounded = false
+	elif not guarded and not grounded and stun > 0:
+		velocity.y = minf(velocity.y,-155)
+	if not grounded and not guarded: juggle_count += 1
 	flash = 0.12
 	arena.hit_effect(position + Vector2(0, -70), guarded, damage,source.side,linked,hit_note,data)
 	visual.play("ko" if hp <= 0 else ("block" if guarded else "hit"),0.8 if hp <= 0 else 0.28)
@@ -478,6 +585,10 @@ func receive(data: Dictionary, source: Node2D) -> void:
 
 func ai_input(dt: float) -> void:
 	if kind == 3 and cancel_window > 0 and v_meter >= 35 and randf() < 0.08: v_skill()
+	if stun <= 0 and cancel_window > 0 and randf() < 0.12:
+		if can_cancel("normal",action_rank+1) and action_rank < 2: normal(action_rank+1,false)
+		elif can_cancel("special"): special(1 if kind == 1 else 0,false)
+		elif can_cancel("super") and meter >= 3 and not arena.demo_mode: super_move()
 	if stun > 0 or active > 0: return
 	if kind >= 3 and v_meter >= 100: trigger()
 	if kind == 4 and not charging and charge <= 0 and randf() < 0.01: v_skill()

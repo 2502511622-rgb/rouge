@@ -1,6 +1,6 @@
 # 模因乱斗：抽象食物链
 
-[72 秒界面与过场演示](Meme-Brawl-Showcase.mp4) · [下载完整 Godot 工程包](Meme-Brawl-Godot.zip) · [打开独立 Godot 工程](meme-brawl/project.godot) · [运行、键位与完成范围](meme-brawl/README.md)
+[72 秒真实连段与技能演示](Meme-Brawl-Showcase.mp4) · [下载完整 Godot 工程包](Meme-Brawl-Godot.zip) · [打开独立 Godot 工程](meme-brawl/project.godot) · [运行、键位与完成范围](meme-brawl/README.md)
 
 六角色横版格斗原型：咕咕嘎嘎、刀盾狗、妙脆角猫、奶蛙、牛来、美团袋鼠；含 AI 对战、街机巡回、练习、搓招、EX、CA、V 技能、黄色三幻神 V 触发与四个舞台。Godot 4.3+ 打开工程按 F5，F1 查看招式。已导入原创像素图集与六角色各 27 种状态动画；企鹅与猫各有 16 姿势独立图集，完善了迁徙空战、脆角再生与落地陷阱。原版梗录音因抖音访问受阻尚未导入，当前仍为合成音效；动画使用关键姿势和变换，不是商业级逐帧手绘演出。
 
@@ -10,7 +10,7 @@
 
 ![新版战斗界面](meme-brawl/docs/ui/hud.png)
 
-新增六角色技能特效、突进残影、分层打击音效、命中顿帧与必杀动作曲线。练习模式支持 1–3 必杀、Shift+数字 EX、4 CA。[效果与验证说明](meme-brawl/docs/COMBAT_EFFECTS.md)。
+已加入命中确认连段、轻中重衔接、必杀与超必杀取消、输入缓冲、伤害衰减和浮空追击限制。六角色均有实测 10 连击；练习 F4 查看路线、F5 观看实际连段。重做分层刀光、叠加光晕、密集残影与 CA 终结效果。[连段说明与实机截图](meme-brawl/docs/COMBO_GUIDE.md)。
 
 ---
 

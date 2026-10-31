@@ -1,0 +1,26 @@
+{
+  "meme_fighters_atlas.png": {
+    "type": "original_ai_generated_pixel_art",
+    "layout": {
+      "columns": 6,
+      "rows": 4
+    },
+    "columns": [
+      "gugu",
+      "dog",
+      "cat",
+      "naiwa",
+      "niulai",
+      "kangaroo"
+    ],
+    "poses": [
+      "idle",
+      "punch",
+      "kick",
+      "special"
+    ],
+    "reference": "User-provided written character descriptions. Douyin source videos not accessed due to network policy.",
+    "not_a_rip": true,
+    "animation": "27 state clips combining atlas poses and authored transform keys; not hand-drawn unique art for every frame."
+  }
+}

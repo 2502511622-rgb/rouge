@@ -1,5 +1,8 @@
 extends Node2D
 
+const PixelAnimator = preload("res://scripts/pixel_animator.gd")
+var visual: Node2D
+
 const R = preload("res://scripts/roster.gd")
 var arena: Node2D
 var kind := 0
@@ -54,6 +57,9 @@ func configure(owner_arena: Node2D, character: int, team: int) -> void:
 	position = Vector2(320 if side == 0 else 832, 532)
 	facing = 1 if side == 0 else -1
 	z_index = 3
+	visual = PixelAnimator.new()
+	visual.fighter = self
+	add_child(visual)
 
 func opponent() -> Node2D:
 	return arena.fighters[1 - side]
@@ -140,6 +146,7 @@ func press(key: int) -> void:
 		return
 	if key == KEY_T and cooldown <= 0:
 		say(R.TAUNT[kind])
+		visual.play("taunt",0.8)
 		cooldown = 0.65
 		arena.sound(kind, "taunt")
 		return
@@ -188,6 +195,7 @@ func normal(strength: int, kick: bool) -> void:
 	var low := crouching and kick and not (kind == 5 and trigger_time > 0)
 	var damage: float = [38, 65, 95][strength] * (0.85 if kind == 2 else (1.25 if kind == 4 else 1.0))
 	begin_attack({"damage": damage, "range": [88, 112, 145][strength] + (20 if kick else 0), "low": low, "air": not grounded or (kind == 5 and trigger_time > 0 and kick), "push": 145 + strength * 65, "cancelable": true}, 0.16 + strength * 0.06, 0.23 + strength * 0.13)
+	visual.play(("kick_" if kick else "punch_")+str(strength),cooldown)
 	meter = minf(3, meter + 0.025)
 
 func begin_attack(data: Dictionary, duration: float, recovery: float) -> void:
@@ -214,6 +222,7 @@ func special(move: int, use_ex: bool) -> void:
 	last_special_move = move
 	var empowered := use_ex or (kind == 0 and v_time > 0 and move != 0)
 	say(R.EX[kind][move] if use_ex else R.SPECIALS[kind][move])
+	visual.play(("ex_" if use_ex else "special_")+str(move),0.85 if use_ex else 0.65)
 	motion.clear()
 	if kind >= 3:
 		dlc_special(move, use_ex)
@@ -290,6 +299,7 @@ func v_skill() -> void:
 			velocity.x = 0
 			cancel_window = 0
 			say("狂笑取消 · 哈哈哈哈！")
+			visual.play("v",0.2)
 			arena.sound(kind, "v")
 		return
 	if kind == 4:
@@ -301,6 +311,7 @@ func v_skill() -> void:
 	v_time = 3.5 if kind == 0 else 1.0
 	v_cooldown = 7.0
 	say(R.V[kind])
+	visual.play("v",0.7)
 	arena.sound(kind, "v")
 
 func trigger() -> void:
@@ -308,6 +319,7 @@ func trigger() -> void:
 	v_meter = 0
 	trigger_time = 8.0
 	say(R.TRIGGERS[kind])
+	visual.play("trigger",0.8)
 	arena.sound(kind, "trigger")
 
 func super_move() -> void:
@@ -332,11 +344,13 @@ func super_move() -> void:
 	if kind == 5:
 		grounded = false
 		velocity.y = -300
+	visual.play("ca",1.9)
 	arena.sound(kind, "ca")
 
 func throw_move() -> void:
 	if cooldown > 0 or not grounded: return
 	say("投技")
+	visual.play("throw",0.7)
 	begin_attack({"damage": 125, "range": 85, "height": 70, "throw": true, "push": 430, "knockdown": true}, 0.15, 0.7)
 
 func receive(data: Dictionary, source: Node2D) -> void:
@@ -386,6 +400,7 @@ func receive(data: Dictionary, source: Node2D) -> void:
 		grounded = false
 	flash = 0.12
 	arena.hit_effect(position + Vector2(0, -70), guarded, damage)
+	visual.play("ko" if hp <= 0 else ("block" if guarded else "hit"),0.8 if hp <= 0 else 0.28)
 	arena.sound(kind, "block" if guarded else "hit")
 	if hp <= 0:
 		arena.finish(source.side)
@@ -418,6 +433,13 @@ func ai_input(dt: float) -> void:
 		velocity.x = facing * 230
 
 func _draw() -> void:
+	if visual != null and visual.texture != null:
+		draw_ellipse_shadow()
+		if v_time > 0 or trigger_time > 0:
+			draw_arc(Vector2(0,-70),82,0,TAU,16,R.COLORS[kind],3)
+		if blocking:
+			draw_arc(Vector2(facing*45,-72),60,-1.5 if facing > 0 else 1.6,1.5 if facing > 0 else 4.7,10,Color("73b8ff"),4)
+		return
 	var bob := roundf(sin(animation * 8) * 2) if grounded and active <= 0 else 0.0
 	var color: Color = R.COLORS[kind]
 	if flash > 0: color = Color.WHITE

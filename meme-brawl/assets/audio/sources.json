@@ -1,0 +1,35 @@
+{
+  "recordings": {},
+  "status": "Original recordings are pending exact source links; current fallback is synthesized sound.",
+  "requested_lines": {
+    "gugu": "咕咕嘎嘎！",
+    "dog": "What the dog doing / 我的刀盾！",
+    "cat": "干嘛？",
+    "naiwa": "哈哈哈哈 / 生母弃我，胞兄厌我",
+    "niulai": "妈 —— 妈 ——！",
+    "kangaroo": "胆子真是肥嘟嘟的！抢生意抢到我头上来了！"
+  },
+  "provided_sources": [
+    {
+      "character": "naiwa",
+      "url": "https://v.douyin.com/r0TVToGOFAk/",
+      "creator": "奶皮蛙",
+      "title": "奶蛙咒",
+      "status": "network_policy_blocked; not downloaded"
+    },
+    {
+      "character": "niulai",
+      "url": "https://v.douyin.com/aeBNCaqxsxg/",
+      "creator": "小楠漫剧",
+      "title": "牛来找妈妈",
+      "status": "network_policy_blocked; not downloaded"
+    },
+    {
+      "character": "kangaroo",
+      "url": "https://v.douyin.com/pM6d5W2n1o4/",
+      "creator": "想吃kfc",
+      "title": "枪射不穿我屁股，记住我叫肥嘟嘟",
+      "status": "network_policy_blocked; not downloaded; source tagged 美团老鼠"
+    }
+  ]
+}

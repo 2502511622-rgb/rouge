@@ -34,8 +34,19 @@ var panel: Control
 var music_phase := 0.0
 var sound_players: Array = []
 var smoke := false
+var voice_characters := 0
+var portrait_atlas: Texture2D
 
 func _ready() -> void:
+	if ResourceLoader.exists("res://assets/art/meme_fighters_atlas.png"):
+		portrait_atlas = load("res://assets/art/meme_fighters_atlas.png")
+	var audio_manifest = JSON.parse_string(FileAccess.get_file_as_string("res://assets/audio/sources.json"))
+	if audio_manifest is Dictionary:
+		for character in R.AUDIO:
+			for recording in audio_manifest.get("recordings",{}):
+				if str(recording).begins_with(character+"_") and ResourceLoader.exists("res://assets/audio/"+recording):
+					voice_characters += 1
+					break
 	ui = CanvasLayer.new()
 	add_child(ui)
 	panel = Control.new()
@@ -129,6 +140,7 @@ func new_round() -> void:
 		f.configure(self,selected if side == 0 else rival,side)
 		add_child(f)
 		fighters.append(f)
+		f.visual.play("intro",3.6)
 		if training: f.meter = 3
 	time_left = 99
 	intro_time = 3.6
@@ -182,7 +194,7 @@ func back_to_menu() -> void:
 func _physics_process(dt: float) -> void:
 	elapsed += dt
 	for f in fighters:
-		f.visible = screen == "fight" and not show_help and not paused and cinematic <= 0 and intro_time <= 0
+		f.visible = screen in ["fight","result"] and not show_help and not paused and cinematic <= 0
 	banner_time = maxf(0,banner_time-dt)
 	shake = maxf(0,shake-dt)
 	if screen == "fight" and not paused and not show_help:
@@ -264,6 +276,9 @@ func finish(side: int) -> void:
 	if screen != "fight": return
 	winner = side
 	screen = "result"
+	for team in range(2):
+		fighters[team].position = Vector2(145 if team == 0 else 1007,510)
+		fighters[team].visual.play("win" if team == side else "ko",1.8)
 	announce("K.O.",Color("f0c883"))
 	button("再来一局",Rect2(265,530,290,52),new_round,Color("805035"))
 	if arcade and side == 0 and arcade_wins < R.NAMES.size()-2:
@@ -328,7 +343,7 @@ func _draw() -> void:
 				draw_rect(Rect2(0,122,1152,418),Color(0.65,0.025,0.015,0.18))
 	if screen == "select":
 		draw_rect(Rect2(0,0,1152,648),Color(0.02,0.03,0.06,0.65))
-		text(Vector2(106,56),"ABSTRACT FOOD CHAIN  /  INSERT COIN ∞",15,Color("91aaa7"))
+		text(Vector2(106,56),"PIXEL EDITION  /  27 STATE ANIMATIONS  /  已导入录音 %d/6" % voice_characters,15,Color("91aaa7"))
 		text(Vector2(100,120),"模因乱斗：抽象食物链",48,Color("f2d7a0"))
 		text(Vector2(104,157),"MEME BRAWL     ·     荒野里，没有永远的猎手",20,Color("b9bbc0"))
 		for i in range(R.NAMES.size()):
@@ -367,6 +382,11 @@ func _draw() -> void:
 			else: center(310,"食物链 · 开战！",48,Color("f2d7a0"))
 		elif cinematic > 0:
 			draw_rect(Rect2(0,180,1152,210),Color(0.05,0.02,0.1,0.88))
+			var cutin_path := "res://assets/art/meme_fighters_atlas.png"
+			if ResourceLoader.exists(cutin_path):
+				var atlas: Texture2D = portrait_atlas
+				var cell := Vector2(atlas.get_width()/6.0,atlas.get_height()/4.0)
+				draw_texture_rect_region(atlas,Rect2(28,158,250,250),Rect2(Vector2(ca_kind*cell.x,3*cell.y),cell))
 			if ca_kind == 4:
 				draw_circle(Vector2(576,210),94,Color(1.0,0.85,0.25,0.22))
 				draw_colored_polygon(PackedVector2Array([Vector2(370,450),Vector2(480,230),Vector2(670,230),Vector2(780,450)]),Color(1.0,0.85,0.25,0.14))
@@ -386,6 +406,12 @@ func _draw() -> void:
 		draw_line(Vector2(0,y),Vector2(1152,y),Color(0,0,0,0.065))
 
 func draw_portrait(at: Vector2, kind: int) -> void:
+	var atlas_path := "res://assets/art/meme_fighters_atlas.png"
+	if portrait_atlas != null:
+		var atlas: Texture2D = portrait_atlas
+		var cell := Vector2(atlas.get_width()/6.0,atlas.get_height()/4.0)
+		draw_texture_rect_region(atlas,Rect2(at-Vector2(70,70),Vector2(140,140)),Rect2(Vector2(kind*cell.x,0),cell))
+		return
 	var c: Color = R.COLORS[kind]
 	draw_rect(Rect2(at-Vector2(122,80),Vector2(244,110)),Color(c,0.08))
 	if kind == 0:
@@ -495,7 +521,7 @@ func draw_help() -> void:
 	text(Vector2(67,478),"方向相对朝向 · 0.85 秒缓冲 · Shift+必杀 = EX（1 格）· CA 消耗 3 格",18)
 	text(Vector2(67,520),"原三角克制保留 +8%；新角色无额外属性克制。投技可破当身与霸体。",18)
 	text(Vector2(67,564),"奶蛙：触发时防御降低 / 牛来：蓄力受击清空 / 袋鼠：触发踢技为中段",18)
-	text(Vector2(67,602),"程序像素美术与合成音效；原版录音可替换，见 README。",16,Color("9cabb8"))
+	text(Vector2(67,602),"原创像素图集与状态动画；当前无原版录音，使用合成提示音。",16,Color("9cabb8"))
 
 func run_dlc_checks() -> void:
 	# Frogs must earn a hit-confirm before spending their cancel resource.
@@ -665,6 +691,22 @@ func run_smoke() -> void:
 		assert(fighters[0].hp < R.HP[selected] or fighters[1].hp < R.HP[rival],"AI must engage")
 		print("SIMULATION PASS: ",R.NAMES[kind]," vs ",R.NAMES[rival])
 	run_dlc_checks()
+	for character in range(R.NAMES.size()):
+		selected = character
+		start_match(true,false)
+		var visual = fighters[0].visual
+		assert(visual.texture != null,"Pixel art atlas must be imported")
+		assert(visual.texture.get_width() % 6 == 0 and visual.texture.get_height() % 4 == 0)
+		for clip in visual.CLIPS:
+			assert(visual.CLIPS[clip].size() >= 4,"Every state has a frame sequence")
+			fighters[0].velocity = Vector2(100,0) if clip == "walk" else Vector2.ZERO
+			fighters[0].grounded = clip != "jump"
+			fighters[0].crouching = clip == "crouch"
+			fighters[0].charging = clip == "charge"
+			visual.play(clip,0.5)
+			visual._process(0.2)
+			assert(visual.state == clip and visual.clock > 0,"Animation playback must advance")
+		print("ANIMATION PASS: ",R.NAMES[character]," / ",visual.CLIPS.size()," clips")
 	back_to_menu()
 	assert(panel.get_child_count() == 13,"Selection menu buttons")
 	print("MEME BRAWL SMOKE PASS")

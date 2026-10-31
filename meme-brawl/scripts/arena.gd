@@ -386,7 +386,7 @@ func _draw() -> void:
 			if ResourceLoader.exists(cutin_path):
 				var atlas: Texture2D = portrait_atlas
 				var cell := Vector2(atlas.get_width()/6.0,atlas.get_height()/4.0)
-				draw_texture_rect_region(atlas,Rect2(28,158,250,250),Rect2(Vector2(ca_kind*cell.x,3*cell.y),cell))
+				draw_texture_rect_region(atlas,Rect2(28,158,250,250),Rect2(Vector2(ca_kind*cell.x,3*cell.y),cell).grow(-10))
 			if ca_kind == 4:
 				draw_circle(Vector2(576,210),94,Color(1.0,0.85,0.25,0.22))
 				draw_colored_polygon(PackedVector2Array([Vector2(370,450),Vector2(480,230),Vector2(670,230),Vector2(780,450)]),Color(1.0,0.85,0.25,0.14))
@@ -410,7 +410,7 @@ func draw_portrait(at: Vector2, kind: int) -> void:
 	if portrait_atlas != null:
 		var atlas: Texture2D = portrait_atlas
 		var cell := Vector2(atlas.get_width()/6.0,atlas.get_height()/4.0)
-		draw_texture_rect_region(atlas,Rect2(at-Vector2(70,70),Vector2(140,140)),Rect2(Vector2(kind*cell.x,0),cell))
+		draw_texture_rect_region(atlas,Rect2(at-Vector2(70,70),Vector2(140,140)),Rect2(Vector2(kind*cell.x,0),cell).grow(-10))
 		return
 	var c: Color = R.COLORS[kind]
 	draw_rect(Rect2(at-Vector2(122,80),Vector2(244,110)),Color(c,0.08))

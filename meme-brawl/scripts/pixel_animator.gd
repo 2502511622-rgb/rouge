@@ -107,7 +107,7 @@ func _draw() -> void:
 		angle = beat*0.08
 	var face: float = fighter.facing
 	draw_set_transform(Vector2(0,-88)+offset*Vector2(face,1),angle*face,scale_pose*Vector2(face,1))
-	var region := Rect2(Vector2(fighter.kind*cell.x,row*cell.y),cell)
+	var region := Rect2(Vector2(fighter.kind*cell.x,row*cell.y),cell).grow(-10)
 	var tint := Color.WHITE
 	if fighter.flash > 0: tint = Color(2.2,1.5,1.3)
 	if state.begins_with("ex"):

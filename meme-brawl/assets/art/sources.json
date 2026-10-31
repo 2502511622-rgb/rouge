@@ -19,8 +19,42 @@
       "kick",
       "special"
     ],
-    "reference": "User-provided written character descriptions. Douyin source videos not accessed due to network policy.",
+    "reference": "Original pixel reinterpretation based on inspected public fan references; not original meme frames. User Douyin videos remain inaccessible.",
     "not_a_rip": true,
-    "animation": "27 state clips combining atlas poses and authored transform keys; not hand-drawn unique art for every frame."
+    "animation": "27 state clips combining atlas poses and authored transform keys; not hand-drawn unique art for every frame.",
+    "research_report": "../../docs/REFERENCE_RESEARCH.md",
+    "verified_visual_references": [
+      {
+        "repository": "https://github.com/chunchiehhou/naiwa-feidudu-niulai",
+        "commit": "f7b7fcaf766bff7e3652aa42672e479ea27853fd",
+        "inspected_files": [
+          "src/assets/pet/naiwa/naiwa-idle.png"
+        ],
+        "type": "secondary_fan_reference_not_original_upload"
+      },
+      {
+        "repository": "https://github.com/KevinKaslana093/yellow-anomaly",
+        "commit": "115715860280e0f5cc8b62b6ddd01c4843076489",
+        "inspected_files": [
+          "public/assets/trio.png",
+          "ART-PROMPT.txt"
+        ],
+        "type": "secondary_fan_reference_not_original_upload"
+      },
+      {
+        "repository": "https://github.com/ztidal/codex-daodun-pet",
+        "commit": "db888d80fca67fa41b0a320ceaa2ff000a55d21f",
+        "inspected_files": [
+          "preview/contact-sheet.png"
+        ],
+        "type": "secondary_fan_reference_not_original_upload"
+      }
+    ],
+    "identity_corrections": [
+      "Naiwa: green eyes, pear body, cream belly, gray hands/feet",
+      "Niu Lai: upright biped yellow fur, short horns, purple muzzle/hands/feet",
+      "Feidudu: long ears, brown oval nose, white eyes, cream pouch belly",
+      "Daodun: low round golden Shiba body with short paws and knife/shield"
+    ]
   }
 }

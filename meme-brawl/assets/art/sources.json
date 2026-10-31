@@ -6,7 +6,7 @@
       "rows": 4
     },
     "columns": [
-      "gugu",
+      "legacy_gugu_penguin_unused",
       "dog",
       "cat",
       "naiwa",
@@ -64,7 +64,7 @@
       "rows": 4,
       "width": 1254,
       "height": 1254,
-      "uv_grid": "fractional cell boundaries with ten-pixel sampling guard"
+      "uv_grid": "4 by 4 source layout, complete isolated-frame ownership at runtime"
     },
     "poses": [
       "idle",
@@ -74,7 +74,7 @@
       "jump_up",
       "jump_down",
       "jab",
-      "heavy_flipper",
+      "heavy_punch",
       "low_kick",
       "high_kick",
       "sonic_shout",
@@ -84,12 +84,13 @@
       "hurt",
       "ko"
     ],
-    "design_choice": "Animal penguin interpretation retained from original user design. Administrator-hood fan version exists but is not automatically substituted.",
+    "design_choice": "Reworked to the latest user-supplied visual reference: gray curly hair, sleepy cream round humanoid body, small black shoulder cape, short brown feet. Dedicated sheet supersedes the legacy penguin column in the shared atlas.",
     "reference_notes": [
-      "https://github.com/lmj798/gugugaga-penguin-pet",
-      "https://github.com/ChipenYip/gugu-gaga-penguin"
+      "User-provided image in this conversation: gray-curly-haired cream mascot with black cape."
     ],
-    "animation": "27 state clips use sixteen authored poses plus transform keys; not original video frames."
+    "animation": "Sixteen newly generated connected action poses drive the existing 27 state clips and transform keys.",
+    "reference_type": "user_supplied_image",
+    "sha256": "d2b70bd438b6a9b5a877b6dd30d97c93495cb0c6360c0f48a25476f62147a4e8"
   },
   "cat_actions.png": {
     "type": "original_ai_generated_pixel_art",

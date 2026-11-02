@@ -141,3 +141,5 @@ sh run.sh --audio-driver Dummy --max-fps 30 --script res://tools/visual_check.gd
 已接入六首随角色切换的原创循环 BGM、30 个角色技能提示音、台词与 CA 自动降低音乐音量及完整静音。它们是原创合成音乐／声效，不是原版梗录音。[音频说明与验证](docs/CHARACTER_AUDIO.md)。
 
 六张重设计主场已接入自动主场、手动选图与环境技能联动，详见 [主场设计与实机截图](docs/HOME_STAGES.md)。
+
+地图已按角色图集风格精修：六张颗粒像素背景、独立透明道具和分层技能动画，见 [六图实机总览](docs/stages/contact_sheet.png)。素材为原创 AI 插画，运行不依赖在线服务。

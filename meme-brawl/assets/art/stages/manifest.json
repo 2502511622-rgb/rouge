@@ -1,0 +1,92 @@
+{
+  "type": "AI-generated original pixel illustration, guided by existing fighter artwork",
+  "files": {
+    "gugu.png": {
+      "sha256": "30d9de692d9ef9c859ffa7a1de4de8b473bf67227f6ac74c2e8b29b910db5783",
+      "source": "exec-7bd3f032-da74-4031-ab74-77a50c10bd27.png",
+      "width": 1672,
+      "height": 941,
+      "alpha": false
+    },
+    "dog.png": {
+      "sha256": "fff0f824f8fcbbf79c4a2e6b23dde1f0f2fff037ee0566652687eecc0e96aa55",
+      "source": "exec-3530ad62-aa91-4a41-8a63-e5b14aa2f609.png",
+      "width": 1672,
+      "height": 941,
+      "alpha": false
+    },
+    "cat.png": {
+      "sha256": "1b64ee9557f3b6a2a6f8580dec4c5a210ace5c0c96c8267f45cb4c33e18bbbcc",
+      "source": "exec-63cd2293-4486-4093-bf1f-3b35accf01b0.png",
+      "width": 1672,
+      "height": 941,
+      "alpha": false
+    },
+    "naiwa.png": {
+      "sha256": "516f5f3f8ee0adc568300d31a43be64ae043fc5d9bc41e41a22bece8c13e1a82",
+      "source": "exec-30768c84-dcbb-4328-aa1a-741a7de7f4b5.png",
+      "width": 1672,
+      "height": 941,
+      "alpha": false
+    },
+    "niulai.png": {
+      "sha256": "0afa8366af5da78abd1531336627598e398bf58bb093bb46d169285105bcd6ad",
+      "source": "exec-14409015-4d4b-4e42-a249-2cc4b956ec43.png",
+      "width": 1672,
+      "height": 941,
+      "alpha": false
+    },
+    "kangaroo.png": {
+      "sha256": "2a3b733fc2665ef8d389fa59cfaeea2669c1c81872ed67e8be71b766883db500",
+      "source": "exec-a6563c3d-f6c1-4866-8d68-07c5776c1971.png",
+      "width": 1672,
+      "height": 941,
+      "alpha": false
+    },
+    "props.png": {
+      "sha256": "6890b1b8020acc27e649454ec0e2a749fbce2ee7d9c302284e5f6ca9b72f1855",
+      "source": "exec-10f7989c-f1a3-434c-be96-b8b34e204539.png",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true
+    }
+  },
+  "prop_regions": [
+    [
+      20,
+      38,
+      520,
+      474
+    ],
+    [
+      540,
+      48,
+      494,
+      445
+    ],
+    [
+      1060,
+      50,
+      460,
+      475
+    ],
+    [
+      24,
+      560,
+      512,
+      406
+    ],
+    [
+      540,
+      530,
+      490,
+      440
+    ],
+    [
+      1050,
+      540,
+      470,
+      440
+    ]
+  ]
+}

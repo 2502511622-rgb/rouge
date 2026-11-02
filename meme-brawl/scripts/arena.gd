@@ -85,6 +85,7 @@ var duo_atlases: Dictionary = {}
 func _ready() -> void:
 	if not "--smoke-test" in OS.get_cmdline_user_args(): controls.load_bindings()
 	home_stages.arena = self
+	home_stages.prepare_art()
 	combo_coach.arena = self
 	Frames.prewarm()
 	if ResourceLoader.exists("res://assets/art/meme_fighters_atlas.png"):
@@ -821,7 +822,7 @@ func _draw() -> void:
 		draw_string(DISPLAY,Vector2(424,230),"PAUSE",HORIZONTAL_ALIGNMENT_LEFT,-1,64,ArcadeArt.PAPER)
 		center(263,"食物链暂时停止",18,ArcadeArt.EMBER)
 	if show_help: draw_help()
-	# Thin CRT scanlines over the procedural low-resolution shapes.
+	# Thin CRT scanlines unify illustrated scenery and fighter sprites.
 	for y in range(0,648,4):
 		draw_line(Vector2(0,y),Vector2(1152,y),Color(0,0,0,0.065))
 

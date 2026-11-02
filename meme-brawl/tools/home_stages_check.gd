@@ -15,6 +15,11 @@ func run() -> void:
 	arena.set_physics_process(false)
 	arena.character_audio.set_process(false)
 	assert(arena.R.STAGES.size() == 6)
+	assert(arena.home_stages.backgrounds.size() == 6 and arena.home_stages.props.size() == 6)
+	for texture in arena.home_stages.backgrounds:
+		assert(texture.get_width() >= 1152 and texture.get_height() >= 648)
+	var prop_image = arena.home_stages.props[0].atlas.get_image()
+	assert(prop_image.get_format() == Image.FORMAT_RGBA8 and prop_image.get_pixel(0,0).a == 0,"Props require a genuinely transparent background")
 	var stages = arena.home_stages
 	DirAccess.make_dir_recursive_absolute("res://docs/stages")
 	for kind in range(6):
@@ -25,6 +30,7 @@ func run() -> void:
 		arena.intro_time = 0
 		arena.cinematic = 0
 		assert(arena.stage == kind and stages.stage == kind,"Default home stage follows player")
+		assert(stages.backdrop.texture == stages.backgrounds[kind],"Correct illustrated map must be loaded")
 		var hp: Array = [arena.fighters[0].hp,arena.fighters[1].hp]
 		var meter: Array = [arena.fighters[0].meter,arena.fighters[1].meter]
 		for i in range(1200): stages.tick(1.0/60)
@@ -68,7 +74,9 @@ func run() -> void:
 			arena.fighters[1].blocking = false
 			arena.fighters[1].receive({"damage":100,"strength":2},fighter)
 			assert(stages.crack > 0,"Real heavy impact must expand cracks")
-		if visual: await capture("stage_%d_link" % kind)
+		if visual:
+			stages.tick(.35)
+			await capture("stage_%d_link" % kind)
 		stages.reset(kind)
 		assert(stages.burst == 0 and stages.pulse == 0 and stages.sparks.is_empty())
 	# Manual stage selection is preserved; arcade chooses opponent's home.
@@ -114,6 +122,7 @@ func run() -> void:
 
 func capture(filename: String) -> void:
 	arena.banner_time = 0
+	arena.home_stages.update_backdrop()
 	arena.queue_redraw()
 	await process_frame
 	await RenderingServer.frame_post_draw

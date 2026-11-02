@@ -20,3 +20,5 @@
 六角色原创 BGM 与专属技能音效已接入，详见 [音频设计](meme-brawl/docs/CHARACTER_AUDIO.md)。当前仓库工作区仅保留模因乱斗项目；无关项目已清理，历史仍可从 Git 恢复。
 
 六张重设计主场已接入自动主场、手动选图与环境技能联动，详见 [主场设计与实机截图](meme-brawl/docs/HOME_STAGES.md)。
+
+![六张角色主场精细像素实机](meme-brawl/docs/stages/contact_sheet.png)

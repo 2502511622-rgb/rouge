@@ -86,13 +86,13 @@ func run() -> void:
 	b = arena.fighters[1]
 	b.blocking = true
 	a.normal(0,false)
-	a.tick(0.05,false)
+	a.tick(4.0/60,false)
 	assert(a.cancel_window == 0 and not a.can_cancel("special"),"Blocked contact cannot grant hit-only chain cancels")
 	fixture()
 	a = arena.fighters[0]
 	b = arena.fighters[1]
 	a.normal(0,false)
-	a.tick(0.05,false)
+	a.tick(4.0/60,false)
 	a.special(0,false)
 	assert(a.action_type == "special" and a.meter > 0,"Confirmed normal cancels into special")
 	var old_serial: int = a.action_serial
@@ -132,6 +132,7 @@ func run() -> void:
 	b = arena.fighters[1]
 	a.v_skill()
 	a.receive({"damage":50},b)
+	a.tick(4.0/60,false)
 	assert(a.can_cancel("super"),"Successful counter can be super-canceled")
 	a.super_move()
 	assert(a.meter == 0 and a.action_type == "super")

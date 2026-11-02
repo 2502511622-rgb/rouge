@@ -3,6 +3,7 @@ extends Node2D
 const PixelAnimator = preload("res://scripts/pixel_animator.gd")
 var visual: Node2D
 
+const Rules = preload("res://scripts/combat_rules.gd")
 const R = preload("res://scripts/roster.gd")
 var arena: Node2D
 var kind := 0
@@ -44,6 +45,25 @@ var attack_startup := 0.0
 var invulnerable := 0.0
 var flash := 0.0
 var attack: Dictionary = {}
+var frame_data: Dictionary = {}
+var stun_kind := ""
+var controlled_now := false
+var contact_window := 0.0
+var pending_spawn: Dictionary = {}
+var last_contact: Dictionary = {}
+var grabbed: Dictionary = {}
+var grab_lock := 0.0
+var last_throw_pressed := -100.0
+var throw_protection := 0.0
+var knockdown_air := false
+var down_time := 0.0
+var rising_time := 0.0
+var wake_choice := "normal"
+var dash_time := 0.0
+var dash_direction := 0.0
+var last_tap: Dictionary = {}
+var prejump := 0.0
+var jump_queued := false
 var connected := false
 var hit_interval := 0.0
 var remaining_hits := 0
@@ -64,6 +84,7 @@ func configure(owner_arena: Node2D, character: int, team: int) -> void:
 	arena = owner_arena
 	kind = character
 	side = team
+	controlled_now = team == 0
 	hp = R.HP[kind]
 	position = Vector2(320 if side == 0 else 832, 532)
 	facing = 1 if side == 0 else -1
@@ -72,23 +93,177 @@ func configure(owner_arena: Node2D, character: int, team: int) -> void:
 	visual.fighter = self
 	add_child(visual)
 
+func can_act() -> bool:
+	return hp > 0 and stun <= Rules.EPS and active <= Rules.EPS and cooldown <= Rules.EPS and down_time <= Rules.EPS and rising_time <= Rules.EPS and not knockdown_air and grabbed.is_empty() and grab_lock <= Rules.EPS and dash_time <= Rules.EPS and prejump <= Rules.EPS
+
+func guard_available() -> bool:
+	if hp <= 0 or not grounded or knockdown_air or down_time > 0 or rising_time > 0 or grab_lock > 0 or not grabbed.is_empty() or dash_time > 0 or prejump > 0: return false
+	if stun > Rules.EPS: return stun_kind == "block"
+	return (active <= Rules.EPS and cooldown <= Rules.EPS) or guard_time > 0
+
+func refresh_defense(incoming_facing := 0.0) -> void:
+	if not guard_available():
+		blocking = false
+		return
+	crouching = arena.controls.pressed("crouch")
+	var x := float(arena.controls.pressed("right"))-float(arena.controls.pressed("left"))
+	blocking = x*(facing if incoming_facing == 0 else incoming_facing) < 0 or guard_time > 0
+
+func strike_live() -> bool:
+	return not attack.is_empty() and active > Rules.EPS and attack_startup <= Rules.EPS and contact_window > Rules.EPS and stun <= Rules.EPS and down_time <= 0 and rising_time <= 0 and not knockdown_air
+
+func hurt_box() -> Rect2:
+	if hp <= 0 or down_time > 0 or rising_time > 0 or not grabbed.is_empty(): return Rect2(position,Vector2.ZERO)
+	var width: float = Rules.HURT_WIDTH[kind]
+	var height: float = 90.0 if crouching or low_profile > 0 else Rules.HURT_HEIGHT[kind]
+	return Rect2(position+Vector2(-width*.5,-height),Vector2(width,height))
+
+func push_box() -> Rect2:
+	return Rect2(position-Vector2(Rules.PUSH_WIDTH[kind]*.5,100),Vector2(Rules.PUSH_WIDTH[kind],100))
+
+func hit_box() -> Rect2:
+	if attack.is_empty(): return Rect2(position,Vector2.ZERO)
+	var reach := float(attack.get("range",95))
+	var top := -130.0
+	var bottom := -44.0
+	if attack.get("low",false):
+		top = -36
+		bottom = 4
+	elif attack.get("throw",false):
+		top = -110
+		bottom = -15
+	elif attack.get("special",false) or attack.get("ca",false) or attack.has("height"):
+		top = -float(attack.get("height",120))
+		bottom = 18
+	elif attack.get("kick",false):
+		top = -105
+		bottom = -20
+	var x := 18.0 if facing > 0 else -reach
+	return Rect2(position+Vector2(x,top),Vector2(maxf(0,reach-18),bottom-top))
+
+func throw_immune(super_grab := false) -> bool:
+	return not grounded or (stun > Rules.EPS and not super_grab) or down_time > 0 or rising_time > 0 or knockdown_air or throw_protection > Rules.EPS or not grabbed.is_empty()
+
+func tech_throw(source: Node2D) -> void:
+	for fighter in [self,source]:
+		fighter.grabbed.clear()
+		fighter.grab_lock = 0
+		fighter.active = 0
+		fighter.attack.clear()
+		fighter.pending_spawn.clear()
+		fighter.buffered.clear()
+		fighter.stun = 0
+		fighter.cooldown = 12*Rules.FRAME
+		fighter.throw_protection = 6*Rules.FRAME
+		fighter.velocity.x = -fighter.facing*180
+		fighter.last_contact = {"result":"THROW TECH","advantage":0,"projectile":false}
+	arena.announce("拆投 · THROW TECH",Color("93e6e9"))
+	arena.combat_audio.play_clip("block",0)
+
+func try_dash(action: String) -> void:
+	if not grounded or not can_act(): return
+	var previous := float(last_tap.get(action,-100.0))
+	last_tap[action] = clock
+	if clock-previous > 12*Rules.FRAME: return
+	last_tap.clear()
+	var direction := -1.0 if action == "left" else 1.0
+	var forward := direction*facing > 0
+	dash_time = (18 if forward else 22)*Rules.FRAME
+	dash_direction = direction*(R.SPEED[kind]*1.6 if forward else 340)
+	blocking = false
+	if not forward: throw_protection = 6*Rules.FRAME
+
+func begin_setplay(count: int, empowered: bool, recovery: float, trap := false) -> void:
+	begin_attack({"projectile_only":true,"startup_frames":12,"active_frames":1,"recovery_frames":maxi(12,Rules.frames(recovery)-12),"range":0,"damage":0,"hitstun_frames":24 if trap else 22,"blockstun_frames":14},Rules.FRAME,recovery)
+	pending_spawn = {"time":attack_startup,"count":count,"ex":empowered,"trap":trap,"flat":kind == 2 and horns > 0}
+
+func phase_name() -> String:
+	if hp <= 0: return "KO"
+	if not grabbed.is_empty() or grab_lock > 0: return "GRAB / 拆投窗口"
+	if knockdown_air: return "KNOCKDOWN / 击倒"
+	if down_time > 0: return "DOWN / 倒地"
+	if rising_time > 0: return "RISE / 起身"
+	if stun > Rules.EPS: return "BLOCKSTUN" if stun_kind == "block" else "HITSTUN"
+	if prejump > 0: return "PREJUMP"
+	if dash_time > 0: return "DASH"
+	if attack_startup > Rules.EPS and active > Rules.EPS: return "STARTUP"
+	if active > Rules.EPS: return "ACTIVE" if strike_live() else ("ACTIVE GAP" if attack.get("multi",false) else "ACTION")
+	if cooldown > Rules.EPS: return "RECOVERY"
+	return "NEUTRAL"
+
 func opponent() -> Node2D:
 	return arena.fighters[1 - side]
 
 func tick(dt: float, controlled: bool) -> void:
+	# Large test/preview advances still visit each combat frame, never skip contact.
+	var remaining := dt
+	while remaining > Rules.EPS:
+		var step := minf(remaining,Rules.FRAME)
+		tick_step(step,controlled)
+		remaining -= step
+
+func tick_step(dt: float, controlled: bool) -> void:
+	controlled_now = controlled
+	var held_guard := blocking
+	var was_startup := attack_startup > Rules.EPS
+	var was_rising := rising_time > Rules.EPS
 	clock += dt
 	animation += dt
-	for key in ["stun", "cooldown", "active", "v_time", "v_cooldown", "horns", "invulnerable", "flash", "label_time", "trigger_time", "armor", "cancel_window", "low_profile", "guard_time", "counter_startup", "attack_startup", "buffer_time", "shield_guard"]:
+	for key in ["stun", "cooldown", "active", "v_time", "v_cooldown", "horns", "invulnerable", "flash", "label_time", "trigger_time", "armor", "cancel_window", "low_profile", "guard_time", "counter_startup", "attack_startup", "buffer_time", "shield_guard", "grab_lock", "throw_protection", "dash_time", "prejump"]:
 		set(key, maxf(0.0, float(get(key)) - dt))
+		if key != "buffer_time" and float(get(key)) < Rules.EPS: set(key,0.0)
+	if not grabbed.is_empty():
+		grabbed.time -= dt
+		if grabbed.time <= Rules.EPS:
+			var caught := grabbed.duplicate()
+			grabbed.clear()
+			var resolved: Dictionary = caught.data.duplicate()
+			resolved["techable"] = false
+			receive(resolved,caught.source)
+		queue_redraw()
+		return
+	if down_time > 0:
+		down_time = maxf(0,down_time-dt)
+		if down_time <= Rules.EPS:
+			rising_time = 6*Rules.FRAME
+			if wake_choice == "back": position.x = clampf(position.x-facing*68,72,1080)
+	elif rising_time > 0:
+		rising_time = maxf(0,rising_time-dt)
+	if down_time < Rules.EPS: down_time = 0
+	if rising_time < Rules.EPS: rising_time = 0
+	if was_rising and rising_time <= Rules.EPS:
+		throw_protection = Rules.WAKE_THROW_PROTECTION*Rules.FRAME
+		stun = 0
+		cooldown = 0
+		wake_choice = "normal"
+	if prejump <= Rules.EPS and grounded and jump_queued:
+		jump_queued = false
+		grounded = false
+		jumps = 1
+		velocity.y = -660 if kind == 5 and trigger_time > 0 else -540
 	consume_buffer()
+	if not was_startup and attack_startup <= Rules.EPS: contact_window = maxf(0,contact_window-dt)
+	if not pending_spawn.is_empty():
+		pending_spawn.time -= dt
+		if pending_spawn.time <= Rules.EPS:
+			var emission := pending_spawn.duplicate()
+			pending_spawn.clear()
+			for n in range(emission.count):
+				if emission.trap: arena.place_cat_trap(self,n*43,emission.ex)
+				else: arena.spawn_projectile(self,n*55,emission.ex)
+				if kind == 2:
+					var shot: Dictionary = arena.projectiles[-1]
+					shot.flat = emission.flat
+					shot.damage = (12 if emission.flat else (28 if emission.ex else 20)) if emission.trap else (32 if emission.flat else (80 if emission.ex else 65))
 	if charging and kind == 4:
 		charge = minf(2.5, charge + dt)
 	v_meter = minf(100, v_meter + dt * 3.0)
 	if active <= 0:
 		attack = {}
-	hit_interval -= dt
-	if remaining_hits > 0 and hit_interval <= 0 and not attack.is_empty():
+	if attack_startup <= Rules.EPS: hit_interval -= dt
+	if remaining_hits > 0 and hit_interval <= Rules.EPS and attack_startup <= Rules.EPS and not attack.is_empty():
 		connected = false
+		contact_window = 3*Rules.FRAME
 		remaining_hits -= 1
 		hit_interval = 0.12
 		attack.push = 600 if remaining_hits == 0 else 25
@@ -101,17 +276,24 @@ func tick(dt: float, controlled: bool) -> void:
 				grounded = false
 				velocity.y = -160
 		arena.fx.follow_strike(self)
-	if grounded and active <= 0 and stun <= 0:
+	if grounded and can_act():
 		facing = 1 if opponent().position.x > position.x else -1
+	if stun <= Rules.EPS and active <= Rules.EPS: crouching = false
 	blocking = false
-	crouching = false
 	if controlled:
 		player_input(dt)
 	elif not arena.training:
+		if stun > 0 and stun_kind == "block": blocking = held_guard
 		ai_input(dt)
-	if guard_time > 0 and stun <= 0:
+	elif stun > 0 and stun_kind == "block":
+		blocking = held_guard
+	if guard_time > 0 and stun <= 0 and down_time <= 0 and rising_time <= 0:
 		blocking = true
-	if stun > 0:
+	if dash_time > Rules.EPS:
+		velocity.x = dash_direction
+	elif down_time > Rules.EPS or rising_time > Rules.EPS or grab_lock > Rules.EPS or prejump > Rules.EPS:
+		velocity.x = 0
+	elif stun > 0:
 		velocity.x = move_toward(velocity.x, 0, 650 * dt)
 	elif active <= 0:
 		velocity.x = move_toward(velocity.x, 0, 1200 * dt)
@@ -126,18 +308,25 @@ func tick(dt: float, controlled: bool) -> void:
 			arena.fx.emit("land",position-Vector2(0,50),kind,0.32,facing,slam_pending)
 			arena.combat_audio.play_clip("quake" if slam_pending else "land",1,true)
 			if kind == 4: arena.home_stages.heavy(kind,position)
+		if knockdown_air:
+			knockdown_air = false
+			down_time = (14 if wake_choice == "quick" else (24 if wake_choice == "back" else 30))*Rules.FRAME
+			stun = 0
+			active = 0
+			cooldown = 0
+			buffered.clear()
 		grounded = true
 		juggle_count = 0
 		jumps = 0
 		if slam_pending:
 			slam_pending = false
 			begin_attack({"damage": 150 if slam_ex else 105, "range": 210, "height": 90, "low": true, "push": 300, "knockdown": slam_ex}, 0.2, 0.6)
-	if not attack.is_empty() and not connected and attack_startup <= 0:
+	if strike_live() and not connected and not attack.get("projectile_only",false):
 		var enemy = opponent()
-		var delta: Vector2 = enemy.position - position
-		if delta.x * facing > -24 and absf(delta.x) < float(attack.get("range", 95)) and absf(delta.y) < float(attack.get("height", 100)):
-			connected = true
-			enemy.receive(attack, self)
+		if hit_box().intersects(enemy.hurt_box()):
+			if not enemy.invulnerable > Rules.EPS and not (attack.get("throw",false) and enemy.throw_immune(attack.get("ca",false)) and not attack.get("grab_confirmed",false)):
+				connected = true
+				enemy.receive(attack,self)
 	queue_redraw()
 
 func player_input(_dt: float) -> void:
@@ -152,29 +341,65 @@ func player_input(_dt: float) -> void:
 		last_dir = dir
 	while not motion.is_empty() and clock - float(motion[0][1]) > 0.85:
 		motion.pop_front()
-	if stun > 0: return
-	if active > 0:
-		if kind == 0 and not grounded and attack.get("air",false):
+	if down_time > 0 or rising_time > 0 or knockdown_air or not grabbed.is_empty(): return
+	if stun > 0:
+		if stun_kind == "block":
+			crouching = down and grounded
+			blocking = x*facing < 0 and grounded
+		return
+	if not can_act():
+		if kind == 0 and not grounded and active > 0 and attack.get("air",false):
 			velocity.x = move_toward(velocity.x,x*R.SPEED[0],1800*_dt)
 		return
 	crouching = down and grounded
-	blocking = x * facing < 0 and grounded
-	if not crouching:
-		velocity.x = x * R.SPEED[kind] * (1.45 if (kind == 0 and v_time > 0) or (kind == 3 and trigger_time > 0) else 1.0)
+	blocking = x*facing < 0 and grounded
+	velocity.x = 0 if crouching else x*R.SPEED[kind]*(1.45 if (kind == 0 and v_time > 0) or (kind == 3 and trigger_time > 0) else 1.0)
 
 func press(key: int, ex_modifier := false) -> void:
-	if hp <= 0 or stun > 0: return
+	if hp <= 0: return
 	var action: String = arena.controls.action_for(key)
+	if action == "throw":
+		last_throw_pressed = clock
+		if not grabbed.is_empty():
+			tech_throw(grabbed.source)
+			return
+	if knockdown_air or down_time > 0:
+		if action == "jump":
+			wake_choice = "quick"
+			if down_time > 0: down_time = minf(down_time,14*Rules.FRAME)
+		elif action == ("left" if facing > 0 else "right"):
+			wake_choice = "back"
+			if down_time > 0: down_time = minf(down_time,24*Rules.FRAME)
+		return
+	if stun > 0 or rising_time > 0 or grab_lock > 0 or dash_time > 0 or prejump > 0:
+		if action in ["light","medium","heavy","kick_light","kick_medium","kick_heavy","skill1","skill2","skill3","super","throw","v","jump"]:
+			queue_action("press",key,ex_modifier)
+		return
+	var late_recovery := maxf(active,cooldown) > Rules.EPS and maxf(active,cooldown) <= Rules.INPUT_BUFFER+Rules.EPS
+	var frog_cancel := kind == 3 and action == "v" and cancel_window > 0 and v_meter >= 35
+	if late_recovery and not frog_cancel and action in ["skill1","skill2","skill3","jump","throw","v","trigger"]:
+		var target := "special" if action.begins_with("skill") else action
+		if not can_cancel(target):
+			queue_action("press",key,ex_modifier)
+			return
+	if action in ["left","right"]:
+		try_dash(action)
+		return
 	if action in ["skill1","skill2","skill3"]:
 		special(["skill1","skill2","skill3"].find(action),ex_modifier or arena.controls.pressed("ex"))
 		return
 	if action == "super":
 		super_move()
 		return
-	if action == "jump" and (grounded or (kind == 0 and v_time > 0 and jumps < 2)) and active <= 0:
-		grounded = false
-		jumps += 1
-		velocity.y = -660 if kind == 5 and trigger_time > 0 else -540
+	if action == "jump":
+		if can_act() and (grounded or (kind == 0 and v_time > 0 and jumps < 2)):
+			if grounded:
+				prejump = 4*Rules.FRAME
+				jump_queued = true
+				velocity.x = 0
+			else:
+				jumps += 1
+				velocity.y = -540
 		return
 	if action == "trigger":
 		trigger()
@@ -221,6 +446,8 @@ func matches(sequence: Array) -> bool:
 		if item[0] != 5:
 			filtered.append(item[0])
 	if filtered.size() < sequence.size(): return false
+	if motion.is_empty() or clock-float(motion[-1][1]) > .18: return false
+	if motion.size() >= sequence.size() and clock-float(motion[-sequence.size()][1]) > (.65 if sequence.size() > 3 else .38): return false
 	return filtered.slice(filtered.size() - sequence.size()) == sequence
 
 func say(text: String) -> void:
@@ -239,18 +466,19 @@ func can_cancel(target: String, strength := -1) -> bool:
 func queue_action(type: String, value := 0, option := false) -> void:
 	# A short leniency window, never a stored sequence or an automatic combo.
 	buffered = {"type":type,"value":value,"option":option}
-	buffer_time = 0.14
+	buffer_time = Rules.INPUT_BUFFER+Rules.EPS
 
 func consume_buffer() -> void:
 	if buffer_time <= 0:
 		buffered.clear()
 		return
-	if buffered.is_empty() or stun > 0: return
+	if buffered.is_empty() or stun > 0 or knockdown_air or down_time > 0 or rising_time > 0 or grab_lock > 0 or dash_time > 0 or prejump > 0: return
 	var type: String = buffered.type
 	if (cooldown > 0 or active > 0) and not can_cancel(type,int(buffered.value)): return
 	var command := buffered.duplicate()
 	buffered.clear()
-	if type == "normal": normal(command.value,command.option)
+	if type == "press": press(command.value,command.option)
+	elif type == "normal": normal(command.value,command.option)
 	elif type == "special": special(command.value,command.option)
 	elif type == "super": super_move()
 
@@ -263,6 +491,7 @@ func cancel_into(type: String) -> void:
 	active = 0
 	cooldown = 0
 	remaining_hits = 0
+	pending_spawn.clear()
 	attack = {}
 	velocity.x *= 0.25
 
@@ -273,9 +502,10 @@ func start_action(type: String, rank := -1) -> void:
 	cancel_window = 0
 	confirmed_serial = -1
 	buffered.clear()
+	pending_spawn.clear()
 
 func normal(strength: int, kick: bool) -> void:
-	if hp <= 0 or stun > 0: return
+	if hp <= 0 or stun > 0 or knockdown_air or down_time > 0 or rising_time > 0 or grab_lock > 0: return
 	if cooldown > 0 or active > 0:
 		if can_cancel("normal",strength): cancel_into("normal")
 		else:
@@ -287,10 +517,8 @@ func normal(strength: int, kick: bool) -> void:
 	var reach: float = [88,112,145][strength]+(20 if kick else 0)
 	if kind == 3: reach = [88,110,135][strength]
 	if kind == 5 and kick: reach = [160,200,235][strength]
-	begin_attack({"strength": strength, "kick": kick, "damage": damage, "range": reach, "low": low, "air": not grounded or (kind == 5 and trigger_time > 0 and kick), "push": 195 if kind == 5 and kick else 45 + strength * 25, "guard_chip":0.25 if kind == 4 and strength == 2 else 0.08, "hitstun": [0.27,0.34,0.42][strength], "cancelable": true, "startup": 0.09 + strength*0.035 if kind == 2 else [0.045,0.065,0.085][strength]}, 0.16 + strength * 0.06, 0.23 + strength * 0.13)
-	if kind == 3: cooldown *= 0.82
+	begin_attack({"strength": strength, "kick": kick, "damage": damage, "range": reach, "low": low, "air": not grounded or (kind == 5 and trigger_time > 0 and kick), "push": 195 if kind == 5 and kick else 45 + strength * 25, "guard_chip":0.25 if kind == 4 and strength == 2 else 0.08, "hitstun": [0.27,0.34,0.42][strength], "cancelable": true, "startup_frames": Rules.normal_startup(kind,strength), "active_frames":[3,4,5][strength], "recovery_frames":roundi([10,15,21][strength]*(.82 if kind == 3 else (1.18 if kind == 4 else 1))), "hitstun_frames":[17,22,28][strength], "blockstun_frames":[11,14,18][strength]}, 0.16 + strength * 0.06, 0.23 + strength * 0.13)
 	if kind == 4:
-		cooldown *= 1.18
 		if strength == 2: armor = 0.12
 	visual.play(("kick_" if kick else "punch_")+str(strength),cooldown)
 	arena.combat_audio.play_clip("kick" if kick else "swing",strength)
@@ -307,15 +535,22 @@ func begin_attack(data: Dictionary, duration: float, recovery: float) -> void:
 	if kind == 4 and data.get("special", false):
 		attack.damage = float(attack.get("damage", 0)) * charge_bonus
 		charge_bonus = 1.0
-	attack_startup = float(data.get("startup",0))
-	active = duration + attack_startup
-	cooldown = (recovery + attack_startup) * (0.65 if kind == 3 and trigger_time > 0 else 1.0)
+	frame_data = Rules.profile(action_type,data,duration,recovery)
+	if kind == 3 and trigger_time > 0: frame_data.recovery = maxi(1,roundi(frame_data.recovery*.65))
+	attack["hitstun"] = Rules.seconds(frame_data.hitstun)
+	attack["blockstun"] = Rules.seconds(frame_data.blockstun)
+	attack_startup = Rules.seconds(frame_data.startup)
+	active = Rules.seconds(frame_data.startup+frame_data.active)
+	cooldown = Rules.seconds(frame_data.startup+frame_data.active+frame_data.recovery)
+	contact_window = Rules.seconds(mini(3,frame_data.active) if data.get("multi",false) else frame_data.active)
+	blocking = false
+	if visual.locked: visual.duration = cooldown
 	connected = false
 	remaining_hits = 0
 
 func special(move: int, use_ex: bool) -> void:
-	if hp <= 0 or stun > 0: return
-	var upgrade := use_ex and clock-last_special_at < 0.28 and action_type == "special" and move == last_special_move
+	if hp <= 0 or stun > 0 or knockdown_air or down_time > 0 or rising_time > 0 or grab_lock > 0: return
+	var upgrade := use_ex and attack_startup > Rules.EPS and not connected and clock-last_special_at < 0.28 and action_type == "special" and move == last_special_move
 	if cooldown > 0 or active > 0:
 		if can_cancel("special"): pass
 		elif not upgrade:
@@ -358,11 +593,12 @@ func special(move: int, use_ex: bool) -> void:
 			velocity.x = -facing * 240
 			invulnerable = 0.18
 	elif kind == 1 and move == 2 and empowered:
-		v_time = 1.8
-		cooldown = 0.45
+		begin_attack({"projectile_only":true,"startup_frames":4,"active_frames":40,"recovery_frames":16,"range":0,"damage":0},40*Rules.FRAME,60*Rules.FRAME)
+		counter_startup = 4*Rules.FRAME
+		v_time = 44*Rules.FRAME
 	else:
 		var reach := 155.0 if move == 2 else 115.0
-		begin_attack({"damage": 155 if empowered else 105, "range": reach, "height": 220 if move == 1 else 100, "launch": move == 1, "push": 180, "knockdown": empowered, "ex": empowered}, 0.38, 0.7)
+		begin_attack({"multi":empowered and move == 0,"damage": 155 if empowered else 105, "range": reach, "height": 220 if move == 1 else 100, "launch": move == 1, "push": 180, "knockdown": empowered, "ex": empowered}, 0.38, 0.7)
 		if kind == 1 and move == 0: shield_guard = 0.5 if empowered else 0.35
 		if move == 0 or (kind == 0 and move == 1):
 			velocity.x = facing * (650 if empowered else 440)
@@ -376,22 +612,21 @@ func special(move: int, use_ex: bool) -> void:
 			attack.knockdown = false
 			remaining_hits = 2
 			hit_interval = 0.16
-			active = 0.62
-			cooldown = 0.92
+			frame_data.active = 37
+			frame_data.recovery = 20
+			active = attack_startup+Rules.seconds(37)
+			cooldown = active+Rules.seconds(20)
 
 func penguin_special(move: int, empowered: bool) -> void:
 	if move == 0:
-		for n in range(3 if empowered else 1):
-			arena.spawn_projectile(self,n*55,empowered)
-		active = 0.22
-		cooldown = 0.44 if empowered else 0.42
+		begin_setplay(3 if empowered else 1,empowered,.44 if empowered else .42)
 	elif move == 1:
 		begin_attack({"damage":145 if empowered else 85,"range":125,"height":145,"push":400,"knockdown":empowered},0.45,0.72)
 		low_profile = 0.38 if empowered else 0.22
 		velocity.x = facing*(710 if empowered else 450)
 		if empowered and not grounded: velocity.y = 330
 	else:
-		begin_attack({"damage":48,"range":145,"height":160,"air":true,"push":25},0.4,0.64)
+		begin_attack({"multi":true,"damage":48,"range":145,"height":160,"air":true,"push":25},0.4,0.64)
 		remaining_hits = 2 if empowered else 1
 		hit_interval = 0.12
 		if grounded:
@@ -403,23 +638,17 @@ func penguin_special(move: int, empowered: bool) -> void:
 func cat_special(move: int, empowered: bool) -> void:
 	if move == 0:
 		var blunt := horns > 0
-		for n in range(3 if empowered else 1):
-			arena.spawn_projectile(self,n*55,empowered)
+		begin_setplay(3 if empowered else 1,empowered,.8)
 		horns = maxf(horns,2.6)
-		active = 0.34
-		cooldown = 0.8
 		if blunt: say("磨平 · 钝角气团" if not empowered else "EX · 钝角碎片")
 	elif move == 1:
-		v_time = 1.55 if empowered else 0.8
-		counter_startup = 0.08 if empowered else 0.18
-		active = counter_startup
-		cooldown = 0.75 if empowered else 0.65
+		begin_attack({"projectile_only":true,"startup_frames":5 if empowered else 11,"active_frames":34 if empowered else 28,"recovery_frames":12,"range":0,"damage":0},28*Rules.FRAME,51*Rules.FRAME)
+		counter_startup = attack_startup
+		v_time = active
 	else:
-		for i in range(3 if empowered else 1): arena.place_cat_trap(self,i*43,empowered)
+		begin_setplay(3 if empowered else 1,empowered,.7,true)
 		horns = maxf(horns,2.6)
 		guard_time = 0.5
-		active = 0.3
-		cooldown = 0.7
 		velocity.x = -facing*235
 		v_time = 0.45 if empowered else 0.0
 		counter_startup = 0.08 if empowered else 0.0
@@ -430,21 +659,21 @@ func dlc_special(move: int, empowered: bool) -> void:
 		charging = false
 		charge = 0
 	if (kind == 3 and move == 0 and not empowered) or (kind == 5 and move == 2):
-		arena.spawn_projectile(self, 0, empowered)
-		active = 0.25
-		cooldown = 0.7
+		begin_setplay(1,empowered,.7)
 		return
 	if kind == 3 and move == 2:
 		grounded = false
 		velocity = Vector2(facing * 250,-550)
 		slam_pending = true
 		slam_ex = empowered
-		cooldown = 0.65
+		active = 8*Rules.FRAME
+		cooldown = 18*Rules.FRAME
+		frame_data = {"startup":8,"active":0,"recovery":10,"hitstun":18,"blockstun":12}
 		return
 	var damage := 125.0 if kind == 4 else 95.0
 	var reach := 230.0 if kind == 5 else (280.0 if kind == 4 and move == 2 else 120.0)
 	var multi := empowered and ((kind == 3 and move < 2) or (kind == 4 and move == 2) or (kind == 5 and move == 0))
-	begin_attack({"damage": 62.0 if multi else damage * (1.45 if empowered else 1.0), "range":reach, "height":220 if move == 1 else 100, "launch": move == 1 and kind in [4,5], "low": kind == 4 and move == 2, "push":25 if multi else 340, "special":true, "ex":empowered, "cancelable":true, "knockdown":empowered and not multi},0.65 if multi else 0.35,1.0 if empowered else 0.65)
+	begin_attack({"multi":multi,"damage": 62.0 if multi else damage * (1.45 if empowered else 1.0), "range":reach, "height":220 if move == 1 else 100, "launch": move == 1 and kind in [4,5], "low": kind == 4 and move == 2, "push":25 if multi else 340, "special":true, "ex":empowered, "cancelable":true, "knockdown":empowered and not multi},0.65 if multi else 0.35,1.0 if empowered else 0.65)
 	if multi:
 		remaining_hits = 2
 		hit_interval = 0.18
@@ -471,11 +700,11 @@ func v_skill() -> void:
 			arena.sound(kind, "v")
 		return
 	if kind == 4:
-		if active > 0: return
+		if not can_act(): return
 		charging = not charging
 		say("妈 ——（移动蓄力中）" if charging else "蓄力保留 · %.1f" % charge)
 		return
-	if v_cooldown > 0 or active > 0: return
+	if v_cooldown > 0 or not can_act(): return
 	v_time = 3.5 if kind == 0 else 1.0
 	v_cooldown = 7.0
 	say(R.V[kind])
@@ -483,7 +712,7 @@ func v_skill() -> void:
 	arena.sound(kind, "v")
 
 func trigger() -> void:
-	if kind < 3 or trigger_time > 0 or v_meter < 100 or active > 0: return
+	if kind < 3 or trigger_time > 0 or v_meter < 100 or not can_act(): return
 	v_meter = 0
 	trigger_time = 8.0
 	say(R.TRIGGERS[kind])
@@ -507,7 +736,7 @@ func super_move() -> void:
 	say(R.CA[kind])
 	invulnerable = 0.9
 	arena.begin_ca(kind,side)
-	begin_attack({"damage": 55, "range": 1200 if kind != 1 else 450, "height": 600, "push": 25, "knockdown": false, "ca": true}, 0.85, 1.25)
+	begin_attack({"multi":true,"startup_frames":12,"recovery_frames":30,"damage": 55, "range": 1200 if kind != 1 else 450, "height": 600, "push": 25, "knockdown": false, "ca": true}, 0.85, 1.25)
 	remaining_hits = 5
 	hit_interval = 0.12
 	if kind in [1,3]: velocity.x = facing * 680
@@ -518,27 +747,44 @@ func super_move() -> void:
 	if kind == 5:
 		grounded = false
 		velocity.y = -300
-	visual.play("ca",arena.ca_duration+1.25)
+	visual.play("ca",arena.ca_duration+cooldown)
 	arena.fx.emit("ca",position+Vector2(0,-75),kind,arena.ca_duration+0.8,facing,true)
 	arena.sound(kind, "ca")
 
 func throw_move() -> void:
-	if cooldown > 0 or not grounded: return
+	if not can_act() or not grounded: return
 	start_action("throw")
 	say("投技")
-	visual.play("throw",0.7)
-	begin_attack({"damage": 180 if kind == 4 else 125, "range": 95 if kind == 4 else 85, "height": 70, "throw": true, "push": 430, "knockdown": true}, 0.15, 0.7)
+	begin_attack({"startup_frames":Rules.THROW_STARTUP,"active_frames":Rules.THROW_ACTIVE,"recovery_frames":Rules.THROW_RECOVERY,"techable":true,"damage": 150 if kind == 4 else 110, "range": 68 if kind == 4 else 52, "height": 70, "throw": true, "push": 430, "knockdown": true}, 0.15, 0.7)
+	visual.play("throw",cooldown)
 
 func receive(data: Dictionary, source: Node2D) -> void:
-	var linked := stun > 0
+	var linked := stun > 0 and stun_kind == "hit"
 	var hit_note := "COUNTER HIT" if active > 0 else ("PUNISH" if cooldown > 0 else "")
 	if data.get("throw",false): hit_note = "THROW"
-	if hp <= 0 or invulnerable > 0: return
+	if hp <= 0 or invulnerable > 0 or down_time > 0 or rising_time > 0 or not grabbed.is_empty(): return
+	if controlled_now: refresh_defense(1.0 if source.position.x > position.x else -1.0)
+	if data.get("throw",false) and throw_immune(data.get("ca",false)) and not data.get("grab_confirmed",false): return
+	if data.get("throw",false) and data.get("techable",false):
+		if clock-last_throw_pressed <= 3*Rules.FRAME or (action_type == "throw" and active > 0):
+			tech_throw(source)
+			return
+		grabbed = {"source":source,"data":data.duplicate(),"time":Rules.THROW_TECH*Rules.FRAME}
+		visual.play("hit",Rules.THROW_TECH*Rules.FRAME)
+		active = 0
+		attack.clear()
+		pending_spawn.clear()
+		velocity = Vector2.ZERO
+		source.grab_lock = Rules.THROW_TECH*Rules.FRAME
+		source.active = 0
+		source.attack.clear()
+		return
 	if shield_guard > 0 and data.get("projectile",false) and not data.get("low",false):
 		meter = minf(3,meter+0.08)
 		arena.hit_effect(position+Vector2(facing*30,-70),true,0,source.side,false,"SHIELD",data)
 		return
 	if low_profile > 0 and data.get("projectile", false) and not data.get("low",false): return
+	if data.get("throw",false) and data.get("ca",false): source.attack["grab_confirmed"] = true
 	var is_throw: bool = data.get("throw", false)
 	if is_throw and not grounded: return
 	if not grounded and stun > 0 and juggle_count >= 4 and not data.get("ca",false): return
@@ -550,13 +796,10 @@ func receive(data: Dictionary, source: Node2D) -> void:
 		say("盾反斩！" if kind == 1 else ("肥嘟嘟格挡 · 反击！" if kind == 5 else "磨平棱角 · 弹射反击！"))
 		visual.play("v",0.65)
 		start_action("special")
-		active = 0.2
-		cooldown = 0.4
-		attack = {}
+		begin_attack({"startup_frames":4,"active_frames":3,"recovery_frames":18,"range":170,"height":140,"damage":120 if blunt_counter else 170,"counter":true,"push":420,"knockdown":true},3*Rules.FRAME,25*Rules.FRAME)
 		meter = minf(3, meter + (0.65 if blunt_counter else 0.45))
-		source.receive({"damage": 120 if blunt_counter else 170, "cancelable":true, "serial":action_serial, "counter": true, "push": 420, "knockdown": true}, self)
 		return
-	var guarded := blocking and grounded and not is_throw
+	var guarded := blocking and guard_available() and grounded and not is_throw
 	if data.get("low", false) and not crouching: guarded = false
 	if data.get("air", false) and crouching: guarded = false
 	var damage := float(data.get("damage", 50))
@@ -579,7 +822,9 @@ func receive(data: Dictionary, source: Node2D) -> void:
 			source.cancel_window = 0.3
 			source.confirmed_serial = source.action_serial
 	source.meter = minf(3, source.meter + (0.08 if guarded else 0.16))
-	stun = 0.12 if guarded else float(data.get("hitstun",0.6 if data.get("knockdown", false) else 0.27))
+	stun = float(data.get("blockstun",12*Rules.FRAME)) if guarded else float(data.get("hitstun",18*Rules.FRAME))
+	stun_kind = "block" if guarded else "hit"
+	source.last_contact = {"result":"BLOCK" if guarded else "HIT","advantage":Rules.frames(stun)-Rules.frames(source.cooldown),"projectile":data.get("projectile",false)}
 	if armor > 0 and not is_throw:
 		stun = 0
 		flash = 0.12
@@ -587,15 +832,24 @@ func receive(data: Dictionary, source: Node2D) -> void:
 		if hp <= 0: arena.finish(source.side)
 		return
 	active = 0
+	cooldown = 0
 	attack = {}
+	pending_spawn.clear()
+	buffered.clear()
+	dash_time = 0
+	prejump = 0
+	jump_queued = false
 	if not guarded:
 		guard_time = 0
 		shield_guard = 0
-	if kind == 2:
+	if kind in [1,2,5] and not guarded:
 		v_time = 0
 		counter_startup = 0
 	slam_pending = false
 	velocity.x = source.facing * float(data.get("push", 180)) * (0.35 if guarded else 1.0)
+	if not guarded and data.get("knockdown",false):
+		knockdown_air = true
+		wake_choice = "normal"
 	if not guarded and (data.get("launch",false) or data.get("knockdown",false)):
 		velocity.y = -370 if data.get("launch",false) else -260
 		grounded = false
@@ -628,7 +882,7 @@ func ai_input(dt: float) -> void:
 		if can_cancel("normal",action_rank+1) and action_rank < 2: normal(action_rank+1,kind == 5)
 		elif can_cancel("special"): special(preferred_special(dist),false)
 		elif can_cancel("super") and meter >= 3 and not arena.demo_mode: super_move()
-	if stun > 0 or active > 0: return
+	if not can_act(): return
 	if kind >= 3 and v_meter >= 100: trigger()
 	if kind == 4 and not charging and charge <= 0 and randf() < 0.03: v_skill()
 	blocking = opponent().active > 0 and dist < 220 and randf() < (0.9 if kind == 1 else 0.55)

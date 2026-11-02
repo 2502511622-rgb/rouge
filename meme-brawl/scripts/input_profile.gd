@@ -3,7 +3,7 @@ extends RefCounted
 const ORDER = ["left","right","jump","crouch","light","medium","heavy","skill1","skill2","skill3","super","ex","v","throw","trigger","taunt","kick_light","kick_medium","kick_heavy"]
 const LABELS = {"left":"向左移动","right":"向右移动","jump":"跳跃","crouch":"蹲下","light":"快速攻击","medium":"中攻击","heavy":"重攻击","skill1":"技能一","skill2":"技能二","skill3":"技能三","super":"大招 CA","ex":"强化修饰键 EX","v":"角色特色 V 技能","throw":"投技","trigger":"爆发状态","taunt":"挑衅","kick_light":"进阶轻腿","kick_medium":"进阶中腿","kick_heavy":"进阶重腿"}
 const DEFAULTS = {"left":KEY_A,"right":KEY_D,"jump":KEY_W,"crouch":KEY_S,"light":KEY_J,"medium":KEY_K,"heavy":KEY_L,"skill1":KEY_U,"skill2":KEY_I,"skill3":KEY_O,"super":KEY_P,"ex":KEY_SHIFT,"v":KEY_V,"throw":KEY_G,"trigger":KEY_B,"taunt":KEY_T,"kick_light":KEY_Z,"kick_medium":KEY_X,"kick_heavy":KEY_C}
-const RESERVED = [KEY_ESCAPE,KEY_ENTER,KEY_KP_ENTER,KEY_SPACE,KEY_TAB,KEY_F1,KEY_F2,KEY_F3,KEY_F4,KEY_F5,KEY_M,KEY_R]
+const RESERVED = [KEY_ESCAPE,KEY_ENTER,KEY_KP_ENTER,KEY_SPACE,KEY_TAB,KEY_F1,KEY_F2,KEY_F3,KEY_F4,KEY_F5,KEY_F6,KEY_F7,KEY_M,KEY_R]
 var held: Dictionary = {}
 var bindings: Dictionary = DEFAULTS.duplicate()
 var path := "user://controls.cfg"

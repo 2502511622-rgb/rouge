@@ -247,7 +247,7 @@ func draw_hud() -> void:
 	cut_panel(Rect2(526,12,100,86),Color("222e3a"),15)
 	middle(76,"∞" if arena.training else "%02d" % ceili(arena.time_left),53,Color("ff927c") if arena.time_left <= 10 else Color.WHITE,not arena.training)
 	middle(115,"FINAL ROUND" if arena.round_wins == [1,1] else "ROUND %d" % arena.round_number,12,GOLD,true)
-	if arena.training: middle(151,arena.hint("TRAINING / {skill1} {skill2} {skill3} 技能 · {super} 大招 · F4 提示 · F5 演练"),13,Color("b8acd2"))
+	if arena.training: middle(151,arena.hint("TRAINING / F4 打法 · F5 演练 · F6 判定框 · F7 帧数 · R 重置"),13,Color("b8acd2"))
 	else: middle(151,R.STAGES[arena.stage],12,Color("aba2bc"))
 	if arena.training and arena.screen == "fight" and arena.combo_help and arena.intro_time <= 0 and arena.cinematic <= 0:
 		cut_panel(Rect2(336,194,480,82),Color(0.025,0.04,0.06,0.85),12)

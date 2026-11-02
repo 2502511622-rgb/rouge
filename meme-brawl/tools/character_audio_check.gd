@@ -18,6 +18,7 @@ func run() -> void:
 		for voice in arena.sound_players: voice.stop()
 		audio.duck_time = 0
 		audio._process(2.0)
+		await process_frame
 		assert(audio.active_track == kind+6)
 		assert(audio.music[audio.active_slot].playing)
 		assert(not audio.music[1-audio.active_slot].playing,"Previous track must fade out")
@@ -27,11 +28,13 @@ func run() -> void:
 			var previous: int = audio.cue_cursor
 			audio.play_cue(kind,event)
 			assert(audio.cue_cursor == previous,"Repeat cue must respect cooldown")
+			await create_timer(.025).timeout
 		for move in range(3):
 			audio.cooldowns.clear()
 			var previous: int = audio.cue_cursor
 			arena.skill_fx(arena.fighters[0],move,false)
 			assert(audio.cue_cursor != previous,"Real skill event routes character cue")
+			await create_timer(.025).timeout
 		audio.duck_time = 0
 		audio._process(2.0)
 		assert(is_equal_approx(audio.music[audio.active_slot].volume_db,-19))
@@ -64,5 +67,10 @@ func run() -> void:
 	audio._process(.1)
 	for player in audio.music: assert(not player.playing)
 	print("CHARACTER AUDIO PASS: six loops / thirty cues / skill routing / repeat limits / duck recovery / mute and resume")
+	for player in arena.sound_players:
+		player.stop()
+		player.stream = null
 	arena.queue_free()
+	await process_frame
+	await create_timer(.2).timeout
 	quit()

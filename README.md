@@ -22,3 +22,5 @@
 六张重设计主场已接入自动主场、手动选图与环境技能联动，详见 [主场设计与实机截图](meme-brawl/docs/HOME_STAGES.md)。
 
 ![六张角色主场精细像素实机](meme-brawl/docs/stages/contact_sheet.png)
+
+基础攻防现支持拆投、快速／后撤起身与双击前后方向移动，训练 F6 显示实际判定框、F7 显示帧数。[基础攻防说明](meme-brawl/docs/COMBAT_RULES.md)。

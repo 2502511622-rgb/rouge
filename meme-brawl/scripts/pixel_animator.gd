@@ -73,13 +73,14 @@ func _process(dt: float) -> void:
 	if fighter.arena.paused or fighter.arena.show_help or fighter.arena.hit_pause > 0: return
 	clock += dt
 	if locked and clock >= duration:
-		if state in ["ko","win"] or (state == "ca" and fighter.action_type == "super" and fighter.active > 0):
+		if (state == "win" or (state == "ko" and (fighter.hp <= 0 or fighter.knockdown_air or fighter.down_time > 0 or fighter.rising_time > 0))) or (state == "ca" and fighter.action_type == "super" and fighter.active > 0):
 			clock = duration - 0.001
 		else: locked = false
 	if not locked:
 		var next := "idle"
 		if fighter.hp <= 0: next = "ko"
-		elif fighter.stun > 0: next = "hit"
+		elif fighter.knockdown_air or fighter.down_time > 0 or fighter.rising_time > 0: next = "ko"
+		elif fighter.stun > 0: next = "block" if fighter.stun_kind == "block" else "hit"
 		elif fighter.blocking: next = "block"
 		elif fighter.charging: next = "charge"
 		elif not fighter.grounded: next = "jump"

@@ -47,6 +47,7 @@ var shake_strength := 0.0
 var combo_coach = preload("res://scripts/combo_coach.gd").new()
 var combo_help := true
 var fx: Node2D
+var combat_debug: Node2D
 var combat_audio: Node
 var character_audio: Node
 var paused := false
@@ -125,6 +126,10 @@ func _ready() -> void:
 	character_audio = preload("res://scripts/character_audio.gd").new()
 	character_audio.arena = self
 	add_child(character_audio)
+	combat_debug = preload("res://scripts/combat_debug.gd").new()
+	combat_debug.arena = self
+	combat_debug.z_index = 25
+	add_child(combat_debug)
 	build_menu()
 	if "--smoke-test" in OS.get_cmdline_user_args():
 		smoke = true
@@ -415,6 +420,12 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if key == KEY_F2:
 		open_settings()
 		return
+	if key == KEY_F6:
+		combat_debug.show_boxes = not combat_debug.show_boxes
+		return
+	if key == KEY_F7:
+		combat_debug.show_frames = not combat_debug.show_frames
+		return
 	if key == KEY_F3:
 		if demo_mode: stop_demo()
 		else: start_demo()
@@ -430,7 +441,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			cinematic = 0
 			if fighters.size() == 2:
 				var visual = fighters[ca_side].visual
-				visual.clock = maxf(visual.clock,visual.duration-1.25)
+				visual.clock = maxf(visual.clock,visual.duration-fighters[ca_side].cooldown)
 		elif demo_mode:
 			demo_clock = (demo_segment+1)*12.0
 		elif screen == "result":
@@ -536,11 +547,17 @@ func resolve_overlap() -> void:
 	var a = fighters[0]
 	var b = fighters[1]
 	var diff: Vector2 = b.position-a.position
-	if absf(diff.x) < 70 and absf(diff.y) < 100:
-		var push := (70-absf(diff.x))*0.5
-		var sign_x := 1 if diff.x >= 0 else -1
-		a.position.x = clampf(a.position.x-push*sign_x,72,1080)
-		b.position.x = clampf(b.position.x+push*sign_x,72,1080)
+	var separation: float = (Fighter.Rules.PUSH_WIDTH[a.kind]+Fighter.Rules.PUSH_WIDTH[b.kind])*.5
+	if absf(diff.x) < separation and absf(diff.y) < 100:
+		var push: float = (separation-absf(diff.x))*.5
+		var direction := 1.0 if diff.x >= 0 else -1.0
+		a.position.x = clampf(a.position.x-push*direction,72,1080)
+		b.position.x = clampf(b.position.x+push*direction,72,1080)
+		var residual: float = maxf(0,separation-absf(b.position.x-a.position.x))
+		if a.position.x <= 72 or a.position.x >= 1080:
+			b.position.x = clampf(b.position.x+residual*direction,72,1080)
+		else:
+			a.position.x = clampf(a.position.x-residual*direction,72,1080)
 
 func spawn_projectile(source: Node2D, offset: float, empowered: bool) -> void:
 	var flat: bool = source.kind == 2 and source.horns > 0
@@ -570,6 +587,10 @@ func settle_trap(p: Dictionary) -> void:
 	p.life = 2.6
 	p.damage = 12 if p.flat else 24
 
+func projectile_box(p: Dictionary) -> Rect2:
+	if p.trap: return Rect2(p.position-Vector2(32,14),Vector2(64,28))
+	return Rect2(p.position-Vector2(22,18),Vector2(44,36))
+
 func tick_projectiles(dt: float) -> void:
 	for p in projectiles:
 		if p.delay > 0:
@@ -589,11 +610,12 @@ func tick_projectiles(dt: float) -> void:
 			p.velocity.y = -250
 			p.bounced = true
 		var target = fighters[1-int(p.owner)]
-		var touches: bool = p.position.distance_to(target.position+Vector2(0,-65)) < 64
+		var touches: bool = projectile_box(p).intersects(target.hurt_box())
 		if p.trap:
-			touches = target.grounded and absf(target.position.x-p.position.x) < 38 and target.position.y > 490
+			touches = target.grounded and projectile_box(p).intersects(target.hurt_box())
+		if target.invulnerable > 0 or (target.low_profile > 0 and not p.trap): touches = false
 		if touches:
-			target.receive({"cancelable":true,"serial":p.serial,"special":true,"damage":p.damage,"push":65 if p.trap else (210 if p.kind == 0 else 150),"low":p.trap,"projectile":true,"hitstun":0.42 if p.trap else 0.38},fighters[int(p.owner)])
+			target.receive({"cancelable":true,"serial":p.serial,"special":true,"damage":p.damage,"push":65 if p.trap else (210 if p.kind == 0 else 150),"low":p.trap,"projectile":true,"hitstun":24.0/60 if p.trap else 22.0/60,"blockstun":14.0/60},fighters[int(p.owner)])
 			if p.kind == 5 and not p.bounced:
 				p.position.y = 515
 				p.velocity.y = -250
@@ -851,7 +873,7 @@ func draw_settings() -> void:
 	for index in range(controls.ORDER.size()):
 		var action: String = controls.ORDER[index]
 		text(Vector2(60 if index < 10 else 600,167+(index%10)*37),controls.LABELS[action],18)
-	text(Vector2(60,527),"菜单控制键保留：F1–F5、Esc、Enter、Space、Tab、M 静音、R 练习重置。",15,Color("a49ab8"))
+	text(Vector2(60,527),"菜单控制键保留：F1–F7、Esc、Enter、Space、Tab、M 静音、R 练习重置。",15,Color("a49ab8"))
 	text(Vector2(60,629),"按键不允许重复；设置与招式提示同步更新。EX 可改为修饰键或其他空闲键。",15,Color("a49ab8"))
 
 func draw_help() -> void:
@@ -869,7 +891,7 @@ func draw_help() -> void:
 	text(Vector2(70,418),hint("{v}   "+R.V[selected]+"  ·  "+R.V_HELP[selected]),19)
 	text(Vector2(70,462),hint("{ex} + 技能 = 强化（1 格） · {throw} 投技 · {trigger} 爆发 · {taunt} 挑衅"),18)
 	text(Vector2(70,509),hint(R.TACTICS[selected]),21,R.COLORS[selected])
-	text(Vector2(70,554),"F2 修改键位 · 练习 F4 玩法提示 / F5 角色演练 · F1 或 Esc 关闭",18)
+	text(Vector2(70,554),"F2 修改键位 · 练习 F4 打法 / F5 演练 / F6 判定框 / F7 帧数 · F1 关闭",18)
 	text(Vector2(70,603),hint("进阶腿技 {kick_light}/{kick_medium}/{kick_heavy}；传统搓招可用。所有技能按键以设置为准。"),16,Color("9cabb8"))
 
 func run_dlc_checks() -> void:
@@ -884,7 +906,7 @@ func run_dlc_checks() -> void:
 	a.v_skill()
 	assert(a.v_meter == 100, "Whiff cannot V-cancel")
 	a.normal(1,false)
-	a.tick(0.08,false)
+	a.tick(0.12,false)
 	assert(a.cancel_window > 0)
 	a.v_skill()
 	assert(a.active == 0 and a.cooldown == 0 and a.v_meter < 66, "Hit-confirm cancel spends 35 V")
@@ -904,7 +926,7 @@ func run_dlc_checks() -> void:
 	b = fighters[1]
 	a.v_skill()
 	a.tick(2.0,false)
-	assert(a.charging and a.charge >= 2, "Bull builds charge over time")
+	assert(a.charging and a.charge >= 2-0.00001, "Bull builds charge over time")
 	a.special(2,false)
 	assert(a.attack.damage > 200 and a.charge == 0 and not a.charging, "Charge strengthens next special")
 	a.cooldown = 0
@@ -924,7 +946,7 @@ func run_dlc_checks() -> void:
 	a.active = 0
 	a.cooldown = 0
 	a.stun = 0
-	a.motion = [[2,0],[1,0.1],[4,0.2],[2,0.3],[1,0.4],[4,0.5]]
+	a.motion = [[2,a.clock-.5],[1,a.clock-.4],[4,a.clock-.3],[2,a.clock-.2],[1,a.clock-.1],[4,a.clock]]
 	a.meter = 3
 	a.press(KEY_J)
 	assert(a.meter == 0 and a.attack.get("throw",false), "Bull CA uses double back-quarter-circle punch")
@@ -940,7 +962,7 @@ func run_dlc_checks() -> void:
 	assert(a.attack.air and a.attack.damage > 38, "Trigger kicks are overhead and stronger")
 	a.active = 0
 	a.cooldown = 0
-	a.motion = [[2,0],[3,0.1],[6,0.2],[2,0.3],[3,0.4],[6,0.5]]
+	a.motion = [[2,a.clock-.5],[3,a.clock-.4],[6,a.clock-.3],[2,a.clock-.2],[3,a.clock-.1],[6,a.clock]]
 	a.meter = 3
 	a.press(controls.key("kick_light"))
 	assert(a.meter == 0, "Kangaroo CA uses kick")
@@ -1025,10 +1047,12 @@ func run_duo_checks() -> void:
 	a = fighters[0]
 	b = fighters[1]
 	a.special(0,false)
+	a.tick(12.0/60,false)
 	assert(a.horns > 0 and not projectiles[0].flat,"First chip shot removes horns")
 	a.active = 0
 	a.cooldown = 0
 	a.special(0,false)
+	a.tick(12.0/60,false)
 	assert(projectiles[-1].flat and projectiles[-1].damage < projectiles[0].damage,"Hornless shot has different damage and visual shape")
 	a.horns = 0.01
 	a.tick(0.02,false)
@@ -1074,7 +1098,7 @@ func run_duo_checks() -> void:
 	b.grounded = true
 	b.invulnerable = 0
 	tick_projectiles(0)
-	assert(b.hp < before and b.stun >= 0.4 and projectiles.is_empty(),"Stepping on shards trips once and consumes trap")
+	assert(b.hp < before and b.stun >= 24.0/60 and projectiles.is_empty(),"Stepping on shards trips once and consumes trap")
 	print("DUO PASS: cat horn loss / blunt shot / regeneration / guarded retreat / counter startup / EX ground traps / jump avoidance")
 
 func run_presentation_checks() -> void:
@@ -1229,6 +1253,7 @@ func run_smoke() -> void:
 		cinematic = 0
 		if kind in [1,2,5]:
 			a.active = 0
+			a.cooldown = 0
 			a.invulnerable = 0
 			a.v_cooldown = 0
 			a.v_skill()
@@ -1248,10 +1273,12 @@ func run_smoke() -> void:
 	b.receive({"damage":100},a)
 	assert(hp_before-b.hp < 10,"Guard reduces damage")
 	b.invulnerable = 0
+	b.stun = 0
 	b.receive({"damage":100,"throw":true},a)
 	assert(hp_before-b.hp > 100,"Throw bypasses guard")
 	a.v_skill()
 	a.press(KEY_W)
+	a.tick(4.0/60,false)
 	a.press(KEY_W)
 	assert(a.jumps == 2,"Penguin V enables double jump")
 	b.hp = 1

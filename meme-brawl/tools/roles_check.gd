@@ -49,16 +49,19 @@ func run() -> void:
 	fixture(0)
 	var a = arena.fighters[0]
 	a.press(arena.controls.key("skill1"))
+	a.tick(12.0/60,false)
 	var sonic_speed: float = arena.projectiles[0].velocity.x
 	var sonic_recovery: float = a.cooldown
 	a.ai_time = 999
 	arena.fighters[1].position.x = a.position.x+120
 	a.active = 0
+	a.cooldown = 0
 	a.ai_input(0.016)
 	assert(a.velocity.x < 0,"Ranged AI retreats from close pressure")
 	fixture(2)
 	a = arena.fighters[0]
 	a.press(arena.controls.key("skill1"))
+	a.tick(12.0/60,false)
 	assert(sonic_speed > arena.projectiles[0].velocity.x and sonic_recovery < a.cooldown)
 	fixture(1)
 	a = arena.fighters[0]
@@ -76,12 +79,14 @@ func run() -> void:
 		a.active = 0
 		a.cooldown = 0
 		a.press(arena.controls.key("skill3"))
+		a.tick(12.0/60,false)
 	assert(arena.cat_trap_count(0) == 3 and a.guard_time > 0 and a.v_time == 0)
 	arena.spawn_projectile(a,0,true)
 	arena.settle_trap(arena.projectiles[-1])
 	a.active = 0
 	a.cooldown = 0
 	a.press(arena.controls.key("skill3"))
+	a.tick(12.0/60,false)
 	assert(arena.cat_trap_count(0) == 3,"Expired EX fragments must not bypass the placed-trap cap")
 	before = b.hp
 	var trap: Dictionary = arena.projectiles.filter(func(p): return p.trap and p.life > 0)[0]
@@ -100,7 +105,7 @@ func run() -> void:
 	before = b.hp
 	a.press(KEY_K)
 	assert(a.attack.kick and a.attack.range == 200,"Kangaroo's primary keys must use long kicks")
-	a.tick(0.08,false)
+	a.tick(6.0/60,false)
 	assert(b.hp < before,"Midrange kick must connect where an ordinary punch cannot")
 	assert(a.preferred_special(210) == 0)
 	print("ROLES PASS: global simple controls / six distinct lessons / ranged spacing / shield vulnerability / trap cap / heavy armor / midrange kick")

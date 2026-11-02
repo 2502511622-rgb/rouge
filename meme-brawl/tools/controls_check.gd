@@ -122,6 +122,7 @@ func run() -> void:
 	arena._input(event(KEY_LEFT,false))
 	assert(arena.controls.bind("jump",KEY_UP) == "")
 	f.press(KEY_UP)
+	f.tick(4.0/60,true)
 	assert(not f.grounded and f.jumps == 1)
 	arena._input(event(KEY_LEFT))
 	arena._notification(Node.NOTIFICATION_WM_WINDOW_FOCUS_OUT)

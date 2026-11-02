@@ -143,3 +143,5 @@ sh run.sh --audio-driver Dummy --max-fps 30 --script res://tools/visual_check.gd
 六张重设计主场已接入自动主场、手动选图与环境技能联动，详见 [主场设计与实机截图](docs/HOME_STAGES.md)。
 
 地图已按角色图集风格精修：六张颗粒像素背景、独立透明道具和分层技能动画，见 [六图实机总览](docs/stages/contact_sheet.png)。素材为原创 AI 插画，运行不依赖在线服务。
+
+基础攻防已更新：持续防御修复、统一招式阶段与真实判定框、普通投／拆投、倒地起身和双击冲刺。[操作与帧数说明](docs/COMBAT_RULES.md)。

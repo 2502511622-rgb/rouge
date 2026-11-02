@@ -1,0 +1,60 @@
+{
+  "type": "original procedural map soundtrack",
+  "recorded_meme_voices": false,
+  "files": {
+    "gugu_bgm.ogg": {
+      "style": "muffled glacial electronic ambience and synthetic bird calls",
+      "bpm": 64,
+      "duration": 45.0,
+      "sha256": "c553f3963a4acdf849555fb1e836ee9e8c15e8f69cf771945cdd0e8f574fdf93"
+    },
+    "gugu_echo.ogg": {
+      "style": "muffled glacial electronic ambience and synthetic bird calls",
+      "bpm": 64,
+      "duration": 1.5,
+      "sha256": "0a29f694b462fbed69b414105594597d9f758ec81fe41f5ad06a35ec9dc5288a"
+    },
+    "gugu_home.ogg": {
+      "style": "muffled glacial electronic ambience and synthetic bird calls",
+      "bpm": 64,
+      "duration": 0.85,
+      "sha256": "1ee7d5d746a640e464e1d5b0424bfb25008c8448df8da5306bf4f20a055b502e"
+    },
+    "dog_bgm.ogg": {
+      "style": "sub bass and abrasive metal",
+      "bpm": 80,
+      "duration": 36.0,
+      "sha256": "f514fefd134c02ec4c36683a1de6ef70b18fe694daca007549d3ee94aa97a433"
+    },
+    "cat_bgm.ogg": {
+      "style": "lazy muted plucks and rolling crumbs",
+      "bpm": 72,
+      "duration": 40.0,
+      "sha256": "4d69ccd3a8dd5857883f15c1fe15825e6c3d33f9c36414d0dad9607d35624ceb"
+    },
+    "naiwa_bgm.ogg": {
+      "style": "wet low drone and synthetic frog laugh",
+      "bpm": 66,
+      "duration": 43.636375,
+      "sha256": "c4587ac957524395c7a30609f8c2c52abf36e66102cf6fa8685f15cba3b1dd87"
+    },
+    "naiwa_echo.ogg": {
+      "style": "wet low drone and synthetic frog laugh",
+      "bpm": 66,
+      "duration": 1.5,
+      "sha256": "d7c80f813c4d9f7e67ed69fbe89a06e9ccbfd68208ad62f29b96f55383e1c5cd"
+    },
+    "niulai_bgm.ogg": {
+      "style": "sparse mournful strings and muffled hoof falls",
+      "bpm": 56,
+      "duration": 51.4285625,
+      "sha256": "8cdcd30e98a0d8f5c0c73b6f607fe981daf5762cbbea5a4668edb0e0eda284ff"
+    },
+    "kangaroo_bgm.ogg": {
+      "style": "busy street electronics and abstract delivery chimes",
+      "bpm": 128,
+      "duration": 22.5,
+      "sha256": "c3ba66b0fa2037e8f249f42317c9a5740e78a49aa3935900edbd5b040c2722a3"
+    }
+  }
+}

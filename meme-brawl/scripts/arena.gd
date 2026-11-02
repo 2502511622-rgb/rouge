@@ -25,6 +25,8 @@ var screen := "select"
 var selected := 0
 var rival := 2
 var stage := 0
+var manual_stage := false
+var home_stages = preload("res://scripts/home_stages.gd").new()
 var difficulty := 1.0
 var training := false
 var arcade := false
@@ -82,6 +84,7 @@ var duo_atlases: Dictionary = {}
 
 func _ready() -> void:
 	if not "--smoke-test" in OS.get_cmdline_user_args(): controls.load_bindings()
+	home_stages.arena = self
 	combo_coach.arena = self
 	Frames.prewarm()
 	if ResourceLoader.exists("res://assets/art/meme_fighters_atlas.png"):
@@ -235,7 +238,9 @@ func set_select_target(side: int) -> void:
 	build_menu()
 
 func choose_grid(kind: int) -> void:
-	if select_target == 0: selected = kind
+	if select_target == 0:
+		selected = kind
+		if not manual_stage: stage = selected
 	else: rival = kind
 	presentation.selection_age = 0
 	combat_audio.play_clip("swing",0,true)
@@ -321,6 +326,7 @@ func _input(event: InputEvent) -> void:
 
 func choose(i: int) -> void:
 	selected = i
+	if not manual_stage: stage = selected
 	build_menu()
 
 func cycle_rival() -> void:
@@ -328,7 +334,8 @@ func cycle_rival() -> void:
 	build_menu()
 
 func cycle_stage() -> void:
-	stage = (stage + 1) % 4
+	manual_stage = true
+	stage = (stage + 1) % 6
 	build_menu()
 
 func cycle_difficulty() -> void:
@@ -354,6 +361,8 @@ func start_match(practice := false, tour := false) -> void:
 	new_round()
 
 func new_round() -> void:
+	if not manual_stage: stage = rival if arcade else selected
+	home_stages.reset(stage)
 	controls.release_all()
 	clear_ui()
 	for f in fighters:
@@ -394,6 +403,9 @@ func new_round() -> void:
 	panel.visible = true
 	announce("食物链永恒循环",Color("e7c381"))
 	sound(selected,"intro")
+	if stage == 0 and selected == 0:
+		character_audio.home_call()
+		announce("咕咕嘎嘎 · 小声：咕咕～",Color("c8e1e4"))
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo: return
@@ -478,6 +490,7 @@ func back_to_menu() -> void:
 
 func _physics_process(dt: float) -> void:
 	elapsed += dt
+	home_stages.tick(dt)
 	if demo_mode and not paused and not show_help: update_demo(dt)
 	if screen == "result" and not paused and not show_help:
 		result_time += dt
@@ -600,6 +613,7 @@ func hit_effect(at: Vector2, guarded: bool, damage: float, attacker := -1, linke
 		shake = 0.22
 	fx.impact(at,source.kind,guarded,strength,data,source.facing)
 	combat_audio.impact(source.kind,guarded,strength,data,fighters[1-attacker].kind == 1)
+	if not guarded and strength == 2: home_stages.heavy(source.kind,at)
 	hit_pause = maxf(hit_pause,0.015 if guarded else (0.09 if data.get("finisher",false) else (0.065 if strength == 2 else 0.035)))
 	shake_strength = 1.5 if guarded else (6 if strength == 2 else 3)
 	if not guarded:
@@ -655,7 +669,7 @@ func restart_match() -> void:
 func next_arcade() -> void:
 	arcade_wins += 1
 	rival = (selected + arcade_wins + 1) % R.NAMES.size()
-	stage = (stage + 1) % 4
+	stage = rival if not manual_stage else (stage+1)%6
 	round_wins = [0,0]
 	round_number = 1
 	new_round()
@@ -669,6 +683,7 @@ func toggle_mute() -> void:
 	if screen == "select": build_menu()
 
 func begin_ca(kind: int, side := 0) -> void:
+	home_stages.ca(kind)
 	ca_kind = kind
 	ca_side = side
 	ca_duration = 2.2 if demo_mode else 1.25
@@ -701,7 +716,7 @@ func update_demo(dt: float) -> void:
 		demo_segment = segment
 		selected = segment
 		rival = [2,0,0,4,5,3][segment]
-		stage = segment%4
+		stage = segment%6
 		round_wins = [0,0]
 		round_number = 1
 		new_round()
@@ -734,6 +749,7 @@ func update_demo(dt: float) -> void:
 		panel.visible = false
 
 func skill_fx(f: Node2D, move: int, ex: bool) -> void:
+	home_stages.skill(f.kind)
 	fx.skill(f,move,ex)
 	combat_audio.skill(f.kind,move,ex)
 	character_audio.play_cue(f.kind,"skill%d" % move)
@@ -819,32 +835,7 @@ func draw_portrait(at: Vector2, kind: int) -> void:
 		for chip in Frames.attachments(pose,rect,true): draw_colored_polygon(chip,Color("ecb439"))
 
 func draw_stage() -> void:
-	var skies := [Color("555c61"),Color("627c90"),Color("665149"),Color("75616d")]
-	var grounds := [Color("525543"),Color("a5c0c4"),Color("66594e"),Color("8d7358")]
-	draw_rect(Rect2(0,0,1152,648),skies[stage].darkened(0.4))
-	draw_circle(Vector2(904,204),79,Color("c0b7a1").darkened(stage*0.04))
-	for i in range(15):
-		var x := float(i*91-45)
-		var y := float(325+(i*31)%90)
-		draw_colored_polygon(PackedVector2Array([Vector2(x,480),Vector2(x+36,y),Vector2(x+110,470)]),skies[stage].darkened(0.23+(i%3)*0.08))
-	draw_rect(Rect2(0,454,1152,194),grounds[stage])
-	for i in range(65):
-		var x := float((i*173)%1152)
-		var y := float(461+(i*47)%185)
-		var tint: Color = grounds[stage].darkened(0.12+(i%4)*0.04)
-		draw_rect(Rect2(x,y,15+(i%5)*11,3+(i%3)*3),tint)
-		if stage == 0:
-			draw_line(Vector2(x,y),Vector2(x-8,y-18),tint,3)
-		elif stage == 1:
-			draw_line(Vector2(x,y),Vector2(x+44,y+15),Color("6e929f"),2)
-		elif stage == 3 and i%5 == 0:
-			draw_colored_polygon(PackedVector2Array([Vector2(x,y),Vector2(x+20,y-30),Vector2(x+35,y+4)]),Color("b88943"))
-	for i in range(4):
-		var x := float(72+i*310)
-		draw_line(Vector2(x,458),Vector2(x+13,300-i*12),Color("353a35"),13)
-		draw_line(Vector2(x+10,350),Vector2(x-27,312),Color("353a35"),9)
-		draw_line(Vector2(x+10,335),Vector2(x+52,294+i*9),Color("353a35"),7)
-	draw_rect(Rect2(0,540,1152,108),Color(0.02,0.025,0.035,0.36))
+	home_stages.paint(self)
 
 func draw_settings() -> void:
 	ArcadeArt.backdrop(self,elapsed,false)

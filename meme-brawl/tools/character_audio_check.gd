@@ -18,7 +18,7 @@ func run() -> void:
 		for voice in arena.sound_players: voice.stop()
 		audio.duck_time = 0
 		audio._process(2.0)
-		assert(audio.active_track == kind)
+		assert(audio.active_track == kind+6)
 		assert(audio.music[audio.active_slot].playing)
 		assert(not audio.music[1-audio.active_slot].playing,"Previous track must fade out")
 		assert(audio.tracks[kind].loop and audio.tracks[kind].get_length() > 25)

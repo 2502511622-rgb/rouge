@@ -25,4 +25,4 @@ sh run.sh --headless --editor --import --quit
  timeout 60 sh run.sh --headless --audio-driver Dummy --script res://tools/character_audio_check.gd
 ```
 
-光明之魂 Godot 工程、Windows 游玩包、Switch 启动器及其 CI 已按用户要求从工作区清理。清理前可恢复副本位于 `/tmp/rouge-preserved/unrelated-projects.tar.gz`；它不是项目依赖，不应随项目发布。已有 Git 历史也保留。六张主场地图与环境技能联动未从旧环境恢复，本次只改音频。
+光明之魂 Godot 工程、Windows 游玩包、Switch 启动器及其 CI 已按用户要求从工作区清理。清理前可恢复副本位于 `/tmp/rouge-preserved/unrelated-projects.tar.gz`；它不是项目依赖，不应随项目发布。已有 Git 历史也保留。六张主场地图与环境技能联动已按新方案重新实现，见 HOME_STAGES.md。对战期间改用地图专属氛围音乐，菜单保留角色配乐。

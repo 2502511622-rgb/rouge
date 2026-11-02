@@ -125,6 +125,7 @@ func tick(dt: float, controlled: bool) -> void:
 		if not grounded:
 			arena.fx.emit("land",position-Vector2(0,50),kind,0.32,facing,slam_pending)
 			arena.combat_audio.play_clip("quake" if slam_pending else "land",1,true)
+			if kind == 4: arena.home_stages.heavy(kind,position)
 		grounded = true
 		juggle_count = 0
 		jumps = 0

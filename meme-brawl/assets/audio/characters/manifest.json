@@ -1,0 +1,331 @@
+{
+  "type": "original procedural composition and sound design",
+  "sample_rate": 32000,
+  "recorded_meme_voices": false,
+  "files": {
+    "gugu_bgm.ogg": {
+      "character": "gugu",
+      "event": "bgm",
+      "style": "cold electronic breakbeat",
+      "bpm": 128,
+      "duration": 30.0,
+      "peak": 0.68,
+      "sha256": "ea4972c3a5e6c25539cbabe095fc3a224ce88d938cde88f85d523d5ce127053a"
+    },
+    "gugu_skill0.ogg": {
+      "character": "gugu",
+      "event": "skill0",
+      "style": "cold electronic breakbeat",
+      "bpm": 128,
+      "duration": 0.38,
+      "peak": 0.72,
+      "sha256": "9be36acd626e5eda38b332649188bd9b83dc80d6dc7bd232da82fddb41bf197b"
+    },
+    "gugu_skill1.ogg": {
+      "character": "gugu",
+      "event": "skill1",
+      "style": "cold electronic breakbeat",
+      "bpm": 128,
+      "duration": 0.42,
+      "peak": 0.72,
+      "sha256": "4f72f0ea861534c6837fdb724a9b77b65ba1890166f6596accc544a08d8aa129"
+    },
+    "gugu_skill2.ogg": {
+      "character": "gugu",
+      "event": "skill2",
+      "style": "cold electronic breakbeat",
+      "bpm": 128,
+      "duration": 0.52,
+      "peak": 0.72,
+      "sha256": "93203937791e3067dbd7d90a75e4b113edf33ee02ed6527380120c79652dcc4e"
+    },
+    "gugu_v.ogg": {
+      "character": "gugu",
+      "event": "v",
+      "style": "cold electronic breakbeat",
+      "bpm": 128,
+      "duration": 0.72,
+      "peak": 0.72,
+      "sha256": "1ca3df2fcaac65a426222663eba636d9280fed8ac528dee3f171ac5e7b4c26e5"
+    },
+    "gugu_ca.ogg": {
+      "character": "gugu",
+      "event": "ca",
+      "style": "cold electronic breakbeat",
+      "bpm": 128,
+      "duration": 1.15,
+      "peak": 0.72,
+      "sha256": "5e9af44665e385464618c0f7575d3436eca24958209a04eaa8462ef7a5646960"
+    },
+    "dog_bgm.ogg": {
+      "character": "dog",
+      "event": "bgm",
+      "style": "industrial drums and metallic bass",
+      "bpm": 116,
+      "duration": 33.1034375,
+      "peak": 0.68,
+      "sha256": "adfa534b9afe90605c011b2975d3021cda79d3e5bfd3be9eaee35ba9aee4ed54"
+    },
+    "dog_skill0.ogg": {
+      "character": "dog",
+      "event": "skill0",
+      "style": "industrial drums and metallic bass",
+      "bpm": 116,
+      "duration": 0.38,
+      "peak": 0.72,
+      "sha256": "61d747fbce527dc385d9d86333edb3914ee9a1bd1e5716a687960a8ef94296a7"
+    },
+    "dog_skill1.ogg": {
+      "character": "dog",
+      "event": "skill1",
+      "style": "industrial drums and metallic bass",
+      "bpm": 116,
+      "duration": 0.42,
+      "peak": 0.72,
+      "sha256": "b3058c4bba7d554c71c65ac8e29fbb5a7bcf4674a7076c8bf686d637f5d7e6e1"
+    },
+    "dog_skill2.ogg": {
+      "character": "dog",
+      "event": "skill2",
+      "style": "industrial drums and metallic bass",
+      "bpm": 116,
+      "duration": 0.52,
+      "peak": 0.72,
+      "sha256": "a80f96a319a8b166e2ec5a2d7827eeab41e1a1fb1ee4ff3a8f53f03721bac94d"
+    },
+    "dog_v.ogg": {
+      "character": "dog",
+      "event": "v",
+      "style": "industrial drums and metallic bass",
+      "bpm": 116,
+      "duration": 0.72,
+      "peak": 0.72,
+      "sha256": "43a13fbdb837c714f47f3ff96c9c845645763ed16dd7ad0670f82719b184ae5e"
+    },
+    "dog_ca.ogg": {
+      "character": "dog",
+      "event": "ca",
+      "style": "industrial drums and metallic bass",
+      "bpm": 116,
+      "duration": 1.15,
+      "peak": 0.72,
+      "sha256": "02ed82247487edc83d195377aaf1ff049cb755d50e6e6e5d42a42c350304547d"
+    },
+    "cat_bgm.ogg": {
+      "character": "cat",
+      "event": "bgm",
+      "style": "offbeat plucked oddities",
+      "bpm": 96,
+      "duration": 40.0,
+      "peak": 0.68,
+      "sha256": "9beacb38681fae55cdc6c44e8b212e84ca69d364ed7b37a732a46c90d41eb60a"
+    },
+    "cat_skill0.ogg": {
+      "character": "cat",
+      "event": "skill0",
+      "style": "offbeat plucked oddities",
+      "bpm": 96,
+      "duration": 0.38,
+      "peak": 0.72,
+      "sha256": "73b6f9af8e040ca6422517031067489ed5fc883561b05ba51757f0c54a76abc0"
+    },
+    "cat_skill1.ogg": {
+      "character": "cat",
+      "event": "skill1",
+      "style": "offbeat plucked oddities",
+      "bpm": 96,
+      "duration": 0.42,
+      "peak": 0.72,
+      "sha256": "7702911e7e6cfed4ffa131c4bdb6f3fdf900508c044b91410e451f609687fb06"
+    },
+    "cat_skill2.ogg": {
+      "character": "cat",
+      "event": "skill2",
+      "style": "offbeat plucked oddities",
+      "bpm": 96,
+      "duration": 0.52,
+      "peak": 0.72,
+      "sha256": "6f6c7d64cd4d783abdc079431947e5149b803fa01c1dc3ad481e5616f3b38dcf"
+    },
+    "cat_v.ogg": {
+      "character": "cat",
+      "event": "v",
+      "style": "offbeat plucked oddities",
+      "bpm": 96,
+      "duration": 0.72,
+      "peak": 0.72,
+      "sha256": "d4cd927e20c47fa415e442d1544805f2d99fd46233c043177d57e617bb886bb0"
+    },
+    "cat_ca.ogg": {
+      "character": "cat",
+      "event": "ca",
+      "style": "offbeat plucked oddities",
+      "bpm": 96,
+      "duration": 1.15,
+      "peak": 0.72,
+      "sha256": "d84c04d981760ab7ce3db597ccf0bf590f959c2eaffcd31eff463e89e49fda7f"
+    },
+    "naiwa_bgm.ogg": {
+      "character": "naiwa",
+      "event": "bgm",
+      "style": "syncopated distorted bass",
+      "bpm": 132,
+      "duration": 29.09090625,
+      "peak": 0.68,
+      "sha256": "2886723f3b910ad71be4f0eefaac5fe20dff83818406ac4849dde44e4d33932a"
+    },
+    "naiwa_skill0.ogg": {
+      "character": "naiwa",
+      "event": "skill0",
+      "style": "syncopated distorted bass",
+      "bpm": 132,
+      "duration": 0.38,
+      "peak": 0.72,
+      "sha256": "148eeee0fb262ff2065e4ba25210962241541d60fd9269f75b24638318f122fc"
+    },
+    "naiwa_skill1.ogg": {
+      "character": "naiwa",
+      "event": "skill1",
+      "style": "syncopated distorted bass",
+      "bpm": 132,
+      "duration": 0.42,
+      "peak": 0.72,
+      "sha256": "d081cdccafa165c381b0a810a084b21130a01db63d24782f1c6d525fd4bcf4f2"
+    },
+    "naiwa_skill2.ogg": {
+      "character": "naiwa",
+      "event": "skill2",
+      "style": "syncopated distorted bass",
+      "bpm": 132,
+      "duration": 0.52,
+      "peak": 0.72,
+      "sha256": "bde181cecf5123c607a00e67d9fc2b3305053f1a08e4ae6499f9c69fff995b5b"
+    },
+    "naiwa_v.ogg": {
+      "character": "naiwa",
+      "event": "v",
+      "style": "syncopated distorted bass",
+      "bpm": 132,
+      "duration": 0.72,
+      "peak": 0.72,
+      "sha256": "5857a7d2c607208c9dc83bbbde32c7732bad44c8175bdd449ccadb09f3dcd935"
+    },
+    "naiwa_ca.ogg": {
+      "character": "naiwa",
+      "event": "ca",
+      "style": "syncopated distorted bass",
+      "bpm": 132,
+      "duration": 1.15,
+      "peak": 0.72,
+      "sha256": "87f2ae793eef39395efb3c077b1e99e4d64871ef7f2bd4d9c2f1ec9201da4b3d"
+    },
+    "niulai_bgm.ogg": {
+      "character": "niulai",
+      "event": "bgm",
+      "style": "heavy drums and mournful strings",
+      "bpm": 88,
+      "duration": 43.636375,
+      "peak": 0.68,
+      "sha256": "76453c087a7bc07914ec4523685fe72bfa3f05e213010f97376a0ca050d74215"
+    },
+    "niulai_skill0.ogg": {
+      "character": "niulai",
+      "event": "skill0",
+      "style": "heavy drums and mournful strings",
+      "bpm": 88,
+      "duration": 0.38,
+      "peak": 0.72,
+      "sha256": "26243bfd53078090a2669fca6b23f6161b1fc33fbe691b4f97f40b1bc7450eaa"
+    },
+    "niulai_skill1.ogg": {
+      "character": "niulai",
+      "event": "skill1",
+      "style": "heavy drums and mournful strings",
+      "bpm": 88,
+      "duration": 0.42,
+      "peak": 0.7200000000000001,
+      "sha256": "1d7f8e67e483f92d0be9b058054449c2330ce86a752abbdb1136e5b7a42f4111"
+    },
+    "niulai_skill2.ogg": {
+      "character": "niulai",
+      "event": "skill2",
+      "style": "heavy drums and mournful strings",
+      "bpm": 88,
+      "duration": 0.52,
+      "peak": 0.72,
+      "sha256": "78139d672704c65c89005e6e7e06206c601c4296b0f2659b9d55baacde3a087d"
+    },
+    "niulai_v.ogg": {
+      "character": "niulai",
+      "event": "v",
+      "style": "heavy drums and mournful strings",
+      "bpm": 88,
+      "duration": 0.72,
+      "peak": 0.72,
+      "sha256": "6041c523ece918969b63301d3dac16e5f1cb6fdbc912d7866a4e607d5eccd1e9"
+    },
+    "niulai_ca.ogg": {
+      "character": "niulai",
+      "event": "ca",
+      "style": "heavy drums and mournful strings",
+      "bpm": 88,
+      "duration": 1.15,
+      "peak": 0.72,
+      "sha256": "1979ff51909517d1b68260b50b3b8286cb0f86da197898ac293d936eba0f5f7b"
+    },
+    "kangaroo_bgm.ogg": {
+      "character": "kangaroo",
+      "event": "bgm",
+      "style": "street electronic funk",
+      "bpm": 124,
+      "duration": 30.96775,
+      "peak": 0.68,
+      "sha256": "cb2a530c9d6cd3e3c219a49947bb12db1d44a4b47f516a50975a11d3b0a7230d"
+    },
+    "kangaroo_skill0.ogg": {
+      "character": "kangaroo",
+      "event": "skill0",
+      "style": "street electronic funk",
+      "bpm": 124,
+      "duration": 0.38,
+      "peak": 0.72,
+      "sha256": "d90967795c854d8d3b99d61f71019115f886dfd963444fdfc4e72a492550b15f"
+    },
+    "kangaroo_skill1.ogg": {
+      "character": "kangaroo",
+      "event": "skill1",
+      "style": "street electronic funk",
+      "bpm": 124,
+      "duration": 0.42,
+      "peak": 0.72,
+      "sha256": "f419fdba55d38ed08b1ecfd8995fc395f320daafa2c0770f075873a3cce535c8"
+    },
+    "kangaroo_skill2.ogg": {
+      "character": "kangaroo",
+      "event": "skill2",
+      "style": "street electronic funk",
+      "bpm": 124,
+      "duration": 0.52,
+      "peak": 0.72,
+      "sha256": "7a602058822a221c5c602dfcc346d8f2e5357adf1e26e218ea01bf37dcbcd583"
+    },
+    "kangaroo_v.ogg": {
+      "character": "kangaroo",
+      "event": "v",
+      "style": "street electronic funk",
+      "bpm": 124,
+      "duration": 0.72,
+      "peak": 0.72,
+      "sha256": "c0c0a682b4546c616dfb6c795e51c4d738f4dfec8caa2be5791696b1fb0b621d"
+    },
+    "kangaroo_ca.ogg": {
+      "character": "kangaroo",
+      "event": "ca",
+      "style": "street electronic funk",
+      "bpm": 124,
+      "duration": 1.15,
+      "peak": 0.72,
+      "sha256": "dc3ba7a3ef8d0588fb622173a3c84276bd567cdd0e1351a895f35daa532e7cfd"
+    }
+  }
+}

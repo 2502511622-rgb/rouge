@@ -46,6 +46,7 @@ var combo_coach = preload("res://scripts/combo_coach.gd").new()
 var combo_help := true
 var fx: Node2D
 var combat_audio: Node
+var character_audio: Node
 var paused := false
 var show_help := false
 var muted := false
@@ -117,6 +118,9 @@ func _ready() -> void:
 	combat_audio = preload("res://scripts/combat_audio.gd").new()
 	combat_audio.arena = self
 	add_child(combat_audio)
+	character_audio = preload("res://scripts/character_audio.gd").new()
+	character_audio.arena = self
+	add_child(character_audio)
 	build_menu()
 	if "--smoke-test" in OS.get_cmdline_user_args():
 		smoke = true
@@ -661,6 +665,7 @@ func toggle_mute() -> void:
 	if muted:
 		for player in sound_players: player.stop()
 		combat_audio.stop_all()
+		character_audio.silence()
 	if screen == "select": build_menu()
 
 func begin_ca(kind: int, side := 0) -> void:
@@ -731,10 +736,13 @@ func update_demo(dt: float) -> void:
 func skill_fx(f: Node2D, move: int, ex: bool) -> void:
 	fx.skill(f,move,ex)
 	combat_audio.skill(f.kind,move,ex)
+	character_audio.play_cue(f.kind,"skill%d" % move)
 	sound(f.kind,"special",false)
 
 func sound(kind: int, action: String, fallback := true) -> void:
 	if muted or smoke: return
+	if action in ["v","trigger","ca"]:
+		character_audio.play_cue(kind,"ca" if action == "ca" else "v")
 	var player: AudioStreamPlayer = sound_players[0]
 	for candidate in sound_players:
 		if not candidate.playing:
@@ -744,6 +752,10 @@ func sound(kind: int, action: String, fallback := true) -> void:
 	if ResourceLoader.exists(path):
 		player.stream = load(path)
 		player.volume_db = -6
+		# One foreground voice at a time, with a little recovery time for music.
+		for other in sound_players:
+			if other != player: other.stop()
+		character_audio.duck(player.stream.get_length()+0.25)
 	else:
 		if not fallback: return
 		if action in ["v","trigger","ca"]:
